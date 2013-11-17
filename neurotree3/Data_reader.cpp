@@ -218,8 +218,11 @@ void Data_reader::read_dim(ifstream &t_data_sett)
 
 void Data_reader::read_norma(ifstream &t_data_sett)
 {
+	/*переписать эту функции не очень хорошая ситуация*/
+	/*нужно воспользоваться табличными методами*/
 	string s_evkl ("Evkl");
 	string s_l1("L1");
+	string s_gas("Gas");
 	size_t found;
 	found=s.find(s_evkl);
 	if (found!=string::npos)
@@ -235,7 +238,15 @@ void Data_reader::read_norma(ifstream &t_data_sett)
 		}
 		else
 		{
-			error_exist("Use the correct config file (uncorrect norma)");
+			found=s.find(s_gas);
+			if (found!=string::npos)
+			{
+				norm=Gas;
+			}
+			else
+			{
+				error_exist("Use the correct config file (uncorrect norma)");
+			}
 		}
 	}
 }

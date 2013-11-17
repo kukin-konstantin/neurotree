@@ -27,7 +27,7 @@ Copyright (C) 2011 by Kukin K.A.
 using namespace std;
 
 
-enum c_name_norma {Evkl,L1,City};
+enum c_name_norma {Evkl,L1,City,Gas};
 
 class Norm
 { 
@@ -36,6 +36,7 @@ public:
 	double d_Evkl(const valarray<double> &a);
 	double d_L1(const valarray<double> &a);
 	double d_city_block(const valarray<double> &a);
+	double d_Gas(const valarray<double> &a);
 };
  
 

@@ -23,6 +23,7 @@ Copyright (C) 2011 by Kukin K.A.
 #define DATAREADER_H
 
 #include <string>
+#include <vector>
 #include <iostream>
 #include <fstream>
 #include "char_to_int.h"

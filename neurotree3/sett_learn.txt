@@ -1,9 +1,9 @@
 <method>learning</method>		
-<dimension>4</dimension>		
+<dimension>51</dimension>		
 <norma>L1</norma>		
-<maxnumber>10</maxnumber>
-<iteration>10</iteration>
-<filedatain>data.txt</filedatain>
+<maxnumber>5</maxnumber>
+<iteration>50</iteration>
+<filedatain>data_neurotree.txt</filedatain>
 <tree>tree.txt</tree>
 <cluster>NULL</cluster>
 <result>NULL</result>

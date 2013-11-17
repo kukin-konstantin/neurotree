@@ -33,6 +33,7 @@ struct data_node // ������ ������������ � 
 	valarray<double> pos_clus; // ���������� ��������
 	bool win; // �������� �� �������?
 	int number_node;
+	int number_node_vec;
 	data_node(valarray<double> t_pos_clus):
 	pos_clus(t_pos_clus)
 	{

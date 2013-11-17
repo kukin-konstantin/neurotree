@@ -54,3 +54,15 @@ double Norm::d_city_block(const std::valarray<double> &a)
 	t_val=t_val/n;
 	return t_val;
 }
+
+double Norm::d_Gas(const std::valarray<double> &a)
+{
+	double t_val=0;
+	double sigma=1.0; // не очень хорошо,
+	for (unsigned int i=0;i!=a.size();i++)
+	{
+		t_val=t_val+a[i]*a[i];
+	}
+	t_val=1-exp(-t_val/(2*sigma*sigma));
+	return t_val;
+}

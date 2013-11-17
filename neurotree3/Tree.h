@@ -69,7 +69,7 @@ private:
     
     void delete_helper(TreeNode *);
 	void print_in_tree_file_helper(TreeNode *node,ofstream &t_data_tree);
-	void load_tree_from_file_helper(TreeNode *node,string &s,ifstream &t_data_tree, int &sh);
+	void load_tree_from_file_helper(TreeNode *node,string &s,ifstream &t_data_tree, int &sh,int &sh_vec);
     vector<valarray<double > > read_data_to_memory();// ���������� ��������� ������ �� ����� � ������
     valarray<double> def_pos_root_node(vector<valarray<double > > &t_train_set);//����������� ��������� ��������� �������
 	void expand_neuron_m_thread(int num_nodes,int num_threads);
@@ -87,6 +87,7 @@ private:
 	void assign_num_node_layer();
 	bool read_vec(ifstream &t_data_tree,valarray<double> &v);
 	int get_near_cluster(valarray<double> &v,double (Norm::*f_norm) (const valarray<double>&));
+	vector<int> get_near_cluster_vec(valarray<double> &v,double (Norm::*f_norm) (const valarray<double>&));
 	int get_number_of_proc(int number_all_proc);
 	void get_average_dist_in_clusters(vector<double> &average_cluster_rad,vector<int> &numbers_data_to_one_cluster);// future change: add possibility change name file
 	void get_dist_between_clusters(double (Norm::*f_norm) (const valarray<double>&));
@@ -137,6 +138,10 @@ _root(0)
 		{
 			norm=City;
 		}
+		else if (s=="Gas")
+		{
+			norm=Gas;
+		}
 		valarray<double> v_pos_root(0.0,dim);
 		if (read_vec(data_tree,v_pos_root))
 		{
@@ -147,7 +152,8 @@ _root(0)
 			if (s=="Left")
 			{
 				int sh=0;
-				load_tree_from_file_helper(_root,s,data_tree,sh);
+				int sh_vec=0;
+				load_tree_from_file_helper(_root,s,data_tree,sh,sh_vec);
 			}
 			else
 			{
@@ -184,6 +190,11 @@ void Tree::print_in_tree_file(const char *t_name_file_tree)
 		data_tree<<"City"<<"\n";
 		cout<<"City"<<"\n";//add
 	}
+	else if (norm==Gas)
+	{
+		data_tree<<"Gas"<<"\n";
+		cout<<"Gas"<<"\n";//add
+	}
 	print_in_tree_file_helper(_root,data_tree);
 	data_tree.clear();
 	data_tree.close();
@@ -204,6 +215,10 @@ void Tree::learn()
 	else if (norm==City)
 	{
 		f_norm=&Norm::d_city_block;
+	}
+	else if (norm==Gas)
+	{
+		f_norm=&Norm::d_Gas;
 	}
 	/*����� ����� ����� ��������� �� �������*/
 	if (numberORaccuar)
@@ -235,6 +250,10 @@ void Tree::test(const char *t_name_file_data,const char *t_name_file_clusters,co
 	{
 		f_norm=&Norm::d_city_block;
 	}
+	else if (norm==Gas)
+	{
+		f_norm=&Norm::d_Gas;
+	}
 	/*������ ��������� �������*/
 	/*average distance in cluster*/
 	int numbers_of_clusters=last_layer.size();
@@ -253,7 +272,15 @@ void Tree::test(const char *t_name_file_data,const char *t_name_file_clusters,co
 		/*data_result<<get_near_cluster(v_tmp,f_norm)<<"\n";* old*/
 		/*new console*/
 		int i_tmp=get_near_cluster(v_tmp,f_norm);
-		data_result<<i_tmp<<"\n";
+		vector<int> v_near_clusters=get_near_cluster_vec(v_tmp,f_norm);
+		/*изменение 13.11.2012*/
+		for (int j=0;j!=v_near_clusters.size();j++)
+		{
+			data_result<<v_near_clusters[j]<<"\t";
+		}
+		data_result<<"\n";
+		//data_result<<i_tmp<<"\n";
+		/*изменение 13.11.2012*/
 		cout<<i_tmp<<"\n";
 		/*new console*/
 		//average dist
@@ -335,6 +362,7 @@ vector<valarray<double > > Tree::read_data_to_memory()
 	}
 	stream_data.clear();
 	stream_data.close();
+	t_train_set.pop_back();//add  16/01/13
 	return t_train_set;
 }
 
@@ -388,7 +416,7 @@ void Tree::learn_max_number(double (Norm::*f_norm) (const valarray<double>&))
 	/*����������� ������ ���� ������ ������: ���� �� ������ ������, ������ �� ������ ������*/
 	int num_of_avail_proc= boost::thread::hardware_concurrency();
 	size_t num_threads=get_number_of_proc(num_of_avail_proc);
-	while (!cond_exit_max_number()) // ���� ������������ ���������� ���������
+	while (!cond_exit_max_number()) // Если количество кластеров превышено или количество примеров в кластере меньше допустимого,то выход из цикла 
 	{
 		int num_nodes=last_layer.size();//define number of nodes
 		expand_neuron_m_thread(num_nodes,num_threads);
@@ -704,7 +732,7 @@ void Tree::print_in_tree_file_helper(TreeNode *node,ofstream &t_data_tree)
 
 
 
-void Tree::load_tree_from_file_helper(TreeNode *node,string &s,ifstream &t_data_tree, int &sh)
+void Tree::load_tree_from_file_helper(TreeNode *node,string &s,ifstream &t_data_tree, int &sh,int &sh_vec)
 {
 	if (s=="Left")
 	{
@@ -716,7 +744,7 @@ void Tree::load_tree_from_file_helper(TreeNode *node,string &s,ifstream &t_data_
 			t_data_tree>>s;
 			node->_data.number_node=sh;
 			last_layer.push_back(node);
-			sh++;
+			sh++; 
 			node->_left=0;
 			node->_right=0;
 		}
@@ -737,10 +765,14 @@ void Tree::load_tree_from_file_helper(TreeNode *node,string &s,ifstream &t_data_
 					}
 					data_node data(v_pos_root);
 					data.win=false;
+					//изменение 13.11.12
+					data.number_node_vec=sh_vec;
+					sh_vec++;
+					//изменение 13.11.12
 					node->_left = new TreeNode(data);
 					t_data_tree>>s;
-					load_tree_from_file_helper(node->_left,s,t_data_tree,sh);
-					load_tree_from_file_helper(node,s,t_data_tree,sh);
+					load_tree_from_file_helper(node->_left,s,t_data_tree,sh,sh_vec);
+					load_tree_from_file_helper(node,s,t_data_tree,sh,sh_vec);
 				}
 			}
 		}
@@ -752,9 +784,13 @@ void Tree::load_tree_from_file_helper(TreeNode *node,string &s,ifstream &t_data_
 		{	
 			data_node data(v_pos_root);
 			data.win=false;
+			//изменение 13.11.12
+			data.number_node_vec=sh_vec;
+			sh_vec++;
+			//изменение 13.11.12
 			node->_right = new TreeNode(data);
 			t_data_tree>>s;
-			load_tree_from_file_helper(node->_right,s,t_data_tree,sh);
+			load_tree_from_file_helper(node->_right,s,t_data_tree,sh,sh_vec);
 		}
 	}
 	else
@@ -815,6 +851,38 @@ int Tree::get_near_cluster(valarray<double> &v,double (Norm::*f_norm) (const val
 	}
 	int zn=node->_data.number_node;
 	return zn;
+}
+
+vector<int> Tree::get_near_cluster_vec(std::valarray<double> &v, double (Norm::* f_norm)(const std::valarray<double> &))
+{
+	vector<int> v_near_clusters;
+	Norm *o_norm=0;
+	valarray<double> pos_clus_left(0.0,dim);
+	valarray<double> pos_clus_right(0.0,dim);
+	valarray<double> shift_clus_left(0.0,dim);
+	valarray<double> shift_clus_right(0.0,dim);
+	double norma_l;
+	double norma_r;
+	TreeNode *node=_root;
+	while (node->_left!=NULL)
+	{
+		pos_clus_left=node->_left->_data.pos_clus;
+		pos_clus_right=node->_right->_data.pos_clus;
+		shift_clus_left=v-pos_clus_left;
+		shift_clus_right=v-pos_clus_right;
+		norma_l=(o_norm->*f_norm)(shift_clus_left);
+		norma_r=(o_norm->*f_norm)(shift_clus_right);
+		if (norma_l<=norma_r)
+		{
+			node=node->_left;
+		}
+		else
+		{
+			node=node->_right;
+		}
+		v_near_clusters.push_back(node->_data.number_node_vec);
+	}
+	return v_near_clusters;
 }
 
 void Tree::get_average_dist_in_clusters(vector<double> &average_cluster_rad,vector<int> &numbers_data_to_one_cluster)
