@@ -44,6 +44,7 @@ public:
 	void learn(); // �������� ������
 	void test(const char *t_name_file_data,const char *t_name_file_clusters,const char *t_name_file_result);
 	void print_in_tree_file(const char *t_name_file_tree);
+	void copy_data_set(std::deque<valarray<double > > &t_train_set,data_node &data);
 	~Tree();
 private:
 	TreeNode *_root;
@@ -70,8 +71,8 @@ private:
     void delete_helper(TreeNode *);
 	void print_in_tree_file_helper(TreeNode *node,ofstream &t_data_tree);
 	void load_tree_from_file_helper(TreeNode *node,string &s,ifstream &t_data_tree, int &sh,int &sh_vec);
-    vector<valarray<double > > read_data_to_memory();// ���������� ��������� ������ �� ����� � ������
-    valarray<double> def_pos_root_node(vector<valarray<double > > &t_train_set);//����������� ��������� ��������� �������
+    deque<valarray<double > > read_data_to_memory();// ���������� ��������� ������ �� ����� � ������
+	valarray<double> def_pos_root_node(std::deque<valarray<double > > &t_train_set);//����������� ��������� ��������� �������
 	void expand_neuron_m_thread(int num_nodes,int num_threads);
 	void expand_neuron(int first_index,int last_index); // � �������� ����������� ��������� ���������� map<TreeNode *,int>
 	void learn_neuron_m_thread(int num_nodes,int num_threads,double (Norm::*f_norm) (const valarray<double>&));
@@ -99,12 +100,13 @@ Tree::Tree(const char *t_name_file_data,int t_dim,double t_accuar,int t_max_numb
 _root(0),name_file_data(t_name_file_data),accuar(t_accuar),max_number_cluster(t_max_number_cluster),norm(t_norm),number_iter(t_number_iter),numberORaccuar(t_numberORaccuar),number_proc(t_number_proc)
 {
 	dim=t_dim;
-    vector<valarray<double > > t_train_set=read_data_to_memory();
+    deque<valarray<double > > t_train_set=read_data_to_memory();
 	size_data=t_train_set.size();
 	valarray<double> v_pos_root=def_pos_root_node(t_train_set);
 	data_node data(v_pos_root);
 	//data.pos_clus=v_pos_root;// mistake
-	data.train_set=t_train_set;
+	//data.train_set=t_train_set; // error 17.11 by Rybka
+	copy_data_set(t_train_set,data);
 	data.win=false;
 	data.number_node=1;
 	_root = new TreeNode(data);
@@ -169,6 +171,18 @@ _root(0)
 	data_tree.close();
 }
 
+
+
+void Tree::copy_data_set(std::deque<valarray<double> > &t_train_set,data_node &data)
+{
+	int i=0;
+	while (!t_train_set.empty())
+	{
+		data.train_set.push_back(t_train_set[i]);
+		t_train_set.pop_front();
+	}
+	//std::copy(t_train_set.begin(),t_train_set.end(),std::back_inserter(data.train_set));
+}
 
 void Tree::print_in_tree_file(const char *t_name_file_tree)
 {
@@ -236,7 +250,7 @@ void Tree::learn()
 void Tree::test(const char *t_name_file_data,const char *t_name_file_clusters,const char *t_name_file_result)
 {
 	name_file_data=t_name_file_data;
-    vector<valarray<double > > t_test_set=read_data_to_memory();
+    deque<valarray<double > > t_test_set=read_data_to_memory();
 	double (Norm::*f_norm) (const valarray<double>&) =0;
 	if (norm==Evkl)
 	{
@@ -338,12 +352,12 @@ void Tree::delete_helper(TreeNode *node)
     }
 }
  
-vector<valarray<double > > Tree::read_data_to_memory()
+deque<valarray<double > > Tree::read_data_to_memory()
 {
 	int i=0;
 	double i_tmp;
 	valarray<double> v_tmp(0.0,dim);
-    vector<valarray<double > > t_train_set;
+    deque<valarray<double > > t_train_set;
 	ifstream stream_data;
 	stream_data.open(name_file_data);
 	while (stream_data!=NULL)
@@ -366,7 +380,7 @@ vector<valarray<double > > Tree::read_data_to_memory()
 	return t_train_set;
 }
 
-valarray<double> Tree::def_pos_root_node(vector<valarray<double > > &t_train_set)
+valarray<double> Tree::def_pos_root_node(std::deque<valarray<double > > &t_train_set)
 {
 	valarray<double> v_tmp(0.0,dim);
 	valarray<double> v_cent(0.0,dim);
@@ -569,7 +583,10 @@ void Tree::del_dead_neuron(double (Norm::*f_norm) (const valarray<double>&),int 
 		}
 		else
 		{
-			for (unsigned int i=0;i!=T_tmp->_data.train_set.size();i++)
+			int n_max=T_tmp->_data.train_set.size();
+			//for (unsigned int i=0;i!=T_tmp->_data.train_set.size();i++)
+			int i=n_max-1;
+			while (!T_tmp->_data.train_set.empty())
 			{
 				v_tmp=T_tmp->_data.train_set[i];
 				shift_clus_left=v_tmp-pos_clus_left;
@@ -584,8 +601,10 @@ void Tree::del_dead_neuron(double (Norm::*f_norm) (const valarray<double>&),int 
 				{
 					T_tmp_right->_data.train_set.push_back(v_tmp);
 				}
+				T_tmp->_data.train_set.pop_back();
+				i--;
 			}
-			T_tmp->_data.train_set.clear();
+			//T_tmp->_data.train_set.clear();
 			tmp_layer_local.push_back(T_tmp_left);
 			tmp_layer_local.push_back(T_tmp_right);
 		}

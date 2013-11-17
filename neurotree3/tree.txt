@@ -1,5 +1,5 @@
 51
-Gas
+L1
 -1.#IND	-1.#IND	-1.#IND	-1.#IND	-1.#IND	-1.#IND	-1.#IND	-1.#IND	-1.#IND	-1.#IND	-1.#IND	-1.#IND	-1.#IND	-1.#IND	-1.#IND	-1.#IND	-1.#IND	-1.#IND	-1.#IND	-1.#IND	-1.#IND	-1.#IND	-1.#IND	-1.#IND	-1.#IND	-1.#IND	-1.#IND	-1.#IND	-1.#IND	-1.#IND	-1.#IND	-1.#IND	-1.#IND	-1.#IND	-1.#IND	-1.#IND	-1.#IND	-1.#IND	-1.#IND	-1.#IND	-1.#IND	-1.#IND	-1.#IND	-1.#IND	-1.#IND	-1.#IND	-1.#IND	-1.#IND	-1.#IND	-1.#IND	-1.#IND	Left
 -1.#IND	-1.#IND	-1.#IND	-1.#IND	-1.#IND	-1.#IND	-1.#IND	-1.#IND	-1.#IND	-1.#IND	-1.#IND	-1.#IND	-1.#IND	-1.#IND	-1.#IND	-1.#IND	-1.#IND	-1.#IND	-1.#IND	-1.#IND	-1.#IND	-1.#IND	-1.#IND	-1.#IND	-1.#IND	-1.#IND	-1.#IND	-1.#IND	-1.#IND	-1.#IND	-1.#IND	-1.#IND	-1.#IND	-1.#IND	-1.#IND	-1.#IND	-1.#IND	-1.#IND	-1.#IND	-1.#IND	-1.#IND	-1.#IND	-1.#IND	-1.#IND	-1.#IND	-1.#IND	-1.#IND	-1.#IND	-1.#IND	-1.#IND	-1.#IND	Left
 NULL

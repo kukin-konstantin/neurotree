@@ -23,13 +23,15 @@ Copyright (C) 2011 by Kukin K.A.
 #define TREENODE_H
 
 #include <vector>
+#include <deque>
 #include <valarray>
 using namespace std;
 
 
 struct data_node // ������ ������������ � ����
 {
-	vector< valarray < double > > train_set; // ��������� ���������
+	//vector< valarray < double > > train_set; // ��������� ���������
+	deque< valarray < double > > train_set;
 	valarray<double> pos_clus; // ���������� ��������
 	bool win; // �������� �� �������?
 	int number_node;
