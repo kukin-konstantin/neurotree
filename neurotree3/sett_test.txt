@@ -1,0 +1,10 @@
+<method>testing</method>		
+<dimension>NULL</dimension>		
+<norma>NULL</norma>			
+<maxnumber>NULL</maxnumber>
+<iteration>NULL</iteration>
+<filedatain>data.txt</filedatain>
+<tree>tree.txt</tree>
+<cluster>cluster.txt</cluster>
+<result>result.txt</result>
+
