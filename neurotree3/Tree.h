@@ -107,9 +107,11 @@ _root(0),name_file_data(t_name_file_data),accuar(t_accuar),max_number_cluster(t_
 	//data.pos_clus=v_pos_root;// mistake
 	//data.train_set=t_train_set; // error 17.11 by Rybka
 	copy_data_set(t_train_set,data);
+	t_train_set.clear();
 	data.win=false;
 	data.number_node=1;
 	_root = new TreeNode(data);
+	copy_data_set(data.train_set,_root->_data);
 	last_layer.push_back(_root);
 	val_func=0;
 	last_number_clusters=0;
@@ -150,6 +152,7 @@ _root(0)
 			data_node data(v_pos_root);
 			data.win=false;
 			_root = new TreeNode(data);
+			copy_data_set(data.train_set,_root->_data);
 			data_tree>>s;
 			if (s=="Left")
 			{
@@ -789,6 +792,7 @@ void Tree::load_tree_from_file_helper(TreeNode *node,string &s,ifstream &t_data_
 					sh_vec++;
 					//изменение 13.11.12
 					node->_left = new TreeNode(data);
+					copy_data_set(data.train_set,node->_left->_data);
 					t_data_tree>>s;
 					load_tree_from_file_helper(node->_left,s,t_data_tree,sh,sh_vec);
 					load_tree_from_file_helper(node,s,t_data_tree,sh,sh_vec);
@@ -808,6 +812,7 @@ void Tree::load_tree_from_file_helper(TreeNode *node,string &s,ifstream &t_data_
 			sh_vec++;
 			//изменение 13.11.12
 			node->_right = new TreeNode(data);
+			copy_data_set(data.train_set,node->_right->_data);
 			t_data_tree>>s;
 			load_tree_from_file_helper(node->_right,s,t_data_tree,sh,sh_vec);
 		}

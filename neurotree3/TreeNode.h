@@ -41,6 +41,13 @@ struct data_node // ������ ������������ � 
 	{
 	   win=false;
 	}
+	data_node(const data_node& data)
+	{
+		pos_clus=data.pos_clus;
+		win=data.win;
+		number_node=data.number_node;
+		number_node_vec=data.number_node_vec;
+	}
 };
 
 class TreeNode
@@ -52,7 +59,7 @@ public:
     TreeNode(data_node &); // ����������� ������������
  
     data_node get_data() const; // ������ ������ ����������� ����
- 
+	void copy_data_set(std::deque<valarray<double > > &t_train_set);
 private:
     data_node _data; 
     TreeNode *_left;
@@ -73,6 +80,16 @@ _data(data),
 _left(0),
 _right(0)
 {
+	/*_data.number_node=data.number_node;
+	_data.number_node_vec=data.number_node_vec;
+	_data.pos_clus=data.pos_clus;
+	_data.win=data.win;
+	int i=0;
+	while (!data.train_set.empty())
+	{
+		_data.train_set.push_back(data.train_set[i]);
+		data.train_set.pop_front();
+	}*/
 }
  
 
@@ -80,5 +97,15 @@ data_node TreeNode::get_data() const
 {
     return _data;
 }
- 
+
+void TreeNode::copy_data_set(std::deque<valarray<double > > &t_train_set)
+{
+	int i=0;
+	while (!t_train_set.empty())
+	{
+		_data.train_set.push_back(t_train_set[i]);
+		t_train_set.pop_front();
+	}
+}
+
 #endif

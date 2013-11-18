@@ -123,7 +123,7 @@ int main()
             }
     }
 	sett.close_data_error();
-	system("pause");
+	//system("pause");
     return 0;
 }
 
