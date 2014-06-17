@@ -1,9 +1,0 @@
-<method>learning</method>		
-<dimension>265</dimension>		
-<norma>L1</norma>		
-<maxnumber>8</maxnumber>
-<iteration>1</iteration>
-<filedatain>new_01_rnd.txt</filedatain>
-<tree>tree.txt</tree>
-<cluster>NULL</cluster>
-<result>NULL</result>

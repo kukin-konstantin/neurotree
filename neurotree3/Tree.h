@@ -39,8 +39,8 @@ using namespace std;
 class Tree
 {
 public:
-    Tree(const char *t_name_file_data,int t_dim,double t_accuar,int t_max_number_cluster,c_name_norma t_norm,int t_number_iter,bool t_numberORaccuar,int t_number_proc);
-    Tree(const char *t_name_file_tree);
+    Tree(const char *t_name_file_data,int t_dim,double t_accuar,int t_max_number_cluster,c_name_norma t_norm,int t_number_iter,bool t_numberORaccuar,int t_number_proc, int t_memory_size);//конструктор для обучения
+    Tree(const char *t_name_file_tree); //конструктор для тестирования
 	void learn(); // �������� ������
 	void test(const char *t_name_file_data,const char *t_name_file_clusters,const char *t_name_file_result);
 	void print_in_tree_file(const char *t_name_file_tree);
@@ -61,6 +61,7 @@ private:
 	c_name_norma norm;
 	int number_iter;
 	bool numberORaccuar;
+	int memory_size;
 	int last_number_clusters;
 	int number_proc;
 
@@ -71,13 +72,14 @@ private:
     void delete_helper(TreeNode *);
 	void print_in_tree_file_helper(TreeNode *node,ofstream &t_data_tree);
 	void load_tree_from_file_helper(TreeNode *node,string &s,ifstream &t_data_tree, int &sh,int &sh_vec);
-    deque<valarray<double > > read_data_to_memory();// ���������� ��������� ������ �� ����� � ������
+    deque<valarray<double > > read_data_to_memory();//old version, unuse
 	valarray<double> def_pos_root_node(std::deque<valarray<double > > &t_train_set);//����������� ��������� ��������� �������
+	valarray<double> def_pos_root_node(Keeper_data_set &keep);
 	void expand_neuron_m_thread(int num_nodes,int num_threads);
 	void expand_neuron(int first_index,int last_index); // � �������� ����������� ��������� ���������� map<TreeNode *,int>
 	void learn_neuron_m_thread(int num_nodes,int num_threads,double (Norm::*f_norm) (const valarray<double>&));
 	void learn_neuron(Gener &A,double (Norm::*f_norm) (const valarray<double>&),int first_index,int last_index); // ������� ������� ���������� ������
-	void learn_acc(double (Norm::*f_norm) (const valarray<double>&));  // �������� ���������� �������� ��������
+	void learn_acc(double (Norm::*f_norm) (const valarray<double>&));  //обучение по точности, временно не поддерживается
 	void learn_max_number(double (Norm::*f_norm) (const valarray<double>&)); // �������� ���������� �������� ������������ ���������� ���������
 	void cond_exit_acc(double (Norm::*f_norm) (const valarray<double>&),int first_index,int last_index); // posible to split thread
 	bool cond_exit_acc_m_thread(int num_nodes,int num_threads,double (Norm::*f_norm) (const valarray<double>&));
@@ -96,23 +98,29 @@ private:
 };
  
 
-Tree::Tree(const char *t_name_file_data,int t_dim,double t_accuar,int t_max_number_cluster,c_name_norma t_norm,int t_number_iter,bool t_numberORaccuar,int t_number_proc):
-_root(0),name_file_data(t_name_file_data),accuar(t_accuar),max_number_cluster(t_max_number_cluster),norm(t_norm),number_iter(t_number_iter),numberORaccuar(t_numberORaccuar),number_proc(t_number_proc)
+Tree::Tree(const char *t_name_file_data,int t_dim,double t_accuar,int t_max_number_cluster,c_name_norma t_norm,int t_number_iter,bool t_numberORaccuar,int t_number_proc,int t_memory_size):
+_root(0),name_file_data(t_name_file_data),accuar(t_accuar),max_number_cluster(t_max_number_cluster),norm(t_norm),number_iter(t_number_iter),numberORaccuar(t_numberORaccuar),number_proc(t_number_proc),memory_size(t_memory_size)
 {
 	dim=t_dim;
-    deque<valarray<double > > t_train_set=read_data_to_memory();
-	size_data=t_train_set.size();
-	valarray<double> v_pos_root=def_pos_root_node(t_train_set);
+	Keeper_data_set keep(name_file_data,t_memory_size);
+	valarray<double> v_pos_root=def_pos_root_node(keep);
+
+    //deque<valarray<double > > t_train_set=read_data_to_memory();
+	//size_data=t_train_set.size();
+	//valarray<double> v_pos_root=def_pos_root_node(t_train_set);
+	
 	data_node data(v_pos_root);
-	//data.pos_clus=v_pos_root;// mistake
-	//data.train_set=t_train_set; // error 17.11 by Rybka
-	copy_data_set(t_train_set,data);
+	/*copy_data_set(t_train_set,data);
+	t_train_set.clear();
 	data.win=false;
 	data.number_node=1;
 	_root = new TreeNode(data);
+	copy_data_set(data.train_set,_root->_data);
 	last_layer.push_back(_root);
 	val_func=0;
-	last_number_clusters=0;
+	last_number_clusters=0;*/
+	bool ok=true;
+	std::cout<<"afadf";
 }
  
 Tree::Tree(const char *t_name_file_tree):
@@ -150,6 +158,7 @@ _root(0)
 			data_node data(v_pos_root);
 			data.win=false;
 			_root = new TreeNode(data);
+			copy_data_set(data.train_set,_root->_data);
 			data_tree>>s;
 			if (s=="Left")
 			{
@@ -376,7 +385,6 @@ deque<valarray<double > > Tree::read_data_to_memory()
 	}
 	stream_data.clear();
 	stream_data.close();
-	t_train_set.pop_back();//add  16/01/13
 	return t_train_set;
 }
 
@@ -397,7 +405,19 @@ valarray<double> Tree::def_pos_root_node(std::deque<valarray<double > > &t_train
 	return v_cent;
 }
 
-
+valarray<double> Tree::def_pos_root_node(Keeper_data_set &keep)
+{
+	double umn_pr=keep.get_number_of_examples(dim);
+	size_data=umn_pr;
+	valarray<double> v(0.0,dim);
+	valarray<double> v_cent(0.0,dim);
+	while (keep.get_example_in_order(v,dim))
+	{
+		v_cent=v_cent+v;
+	}
+	v_cent=v_cent/umn_pr;
+	return v_cent;
+}
 int Tree::get_number_of_proc(int number_all_proc)
 {
 	if (number_proc>number_all_proc)
@@ -789,6 +809,7 @@ void Tree::load_tree_from_file_helper(TreeNode *node,string &s,ifstream &t_data_
 					sh_vec++;
 					//изменение 13.11.12
 					node->_left = new TreeNode(data);
+					copy_data_set(data.train_set,node->_left->_data);
 					t_data_tree>>s;
 					load_tree_from_file_helper(node->_left,s,t_data_tree,sh,sh_vec);
 					load_tree_from_file_helper(node,s,t_data_tree,sh,sh_vec);
@@ -808,6 +829,7 @@ void Tree::load_tree_from_file_helper(TreeNode *node,string &s,ifstream &t_data_
 			sh_vec++;
 			//изменение 13.11.12
 			node->_right = new TreeNode(data);
+			copy_data_set(data.train_set,node->_right->_data);
 			t_data_tree>>s;
 			load_tree_from_file_helper(node->_right,s,t_data_tree,sh,sh_vec);
 		}

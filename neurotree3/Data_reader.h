@@ -40,6 +40,7 @@ public:
 	c_name_norma get_norm();
 	int get_max_number();
 	int get_number_it();
+	int get_memory_size();
 	string get_file_data_in();
 	string get_tree();
 	string get_cluster();
@@ -61,8 +62,10 @@ private:
 	string tree;
 	string cluster;
 	string result;
+	int memory_size; //ограничение памяти размер mb, если -1, то нет ограничений
 	bool get_tag(string &s_buff,ifstream &t_data_sett);
 	void read_method(ifstream &t_data_sett);
+	void read_memory_size(ifstream &t_data_sett);
 	void read_dim(ifstream &t_data_sett);
 	void read_norma(ifstream &t_data_sett);
 	void read_max_number(ifstream &t_data_sett);

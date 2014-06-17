@@ -33,6 +33,8 @@ name_file_error(t_name_file_error)
 		data_setting>>s;
 		read_method(data_setting);
 		data_setting>>s;
+		read_memory_size(data_setting);
+		data_setting>>s;
 		if (!method)
 		{
 			read_dim(data_setting);
@@ -128,6 +130,11 @@ int Data_reader::get_number_it()
 	return number_it;
 }
 
+int Data_reader::get_memory_size()
+{
+	return memory_size;
+}
+
 int Data_reader::get_max_number()
 {
 	return max_number;
@@ -193,6 +200,38 @@ void Data_reader::read_method(ifstream &t_data_sett)
 		else
 		{
 			error_exist("Use the correct config file (unknown method)");
+		}
+	}
+}
+
+void Data_reader::read_memory_size(ifstream &t_data_sett)
+{
+	int t_size_of_memory;
+	string s_with_out_restriction("NULL");
+	size_t found;
+	found=s.find(s_with_out_restriction);
+	if (found!=string::npos)
+	{
+		 memory_size=-1;
+	}
+	else
+	{
+		string s_memory_size;
+		if (get_tag(s_memory_size,t_data_sett))
+		{
+			Char_to_int a(s_memory_size);
+			if (a>>t_size_of_memory)
+			{
+				memory_size=t_size_of_memory;
+			}
+			else
+			{
+				error_exist("Use the correct config file (uncorrect memory size)");
+			}
+		}
+		else
+		{
+			error_exist("Use the correct config file (uncorrect memory size)");
 		}
 	}
 }

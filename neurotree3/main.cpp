@@ -110,7 +110,7 @@ int main()
                     const char *name_file_tree=s_name_file_tree.c_str();
                     if (sett.exist_file(name_file))
                     {
-                            Tree der(name_file,sett.get_dim(),0.01,sett.get_max_number(),sett.get_norm(),sett.get_number_it(),true, number_proc);
+						Tree der(name_file,sett.get_dim(),0.01,sett.get_max_number(),sett.get_norm(),sett.get_number_it(),true, number_proc,sett.get_memory_size());
 							//Tree der(name_file,sett.get_dim(),0.001,sett.get_max_number(),sett.get_norm(),sett.get_number_it(),false);
 							der.learn();
 							cout<<"neuron tree file"<<"\n";//add
@@ -123,7 +123,7 @@ int main()
             }
     }
 	sett.close_data_error();
-	system("pause");
+	//system("pause");
     return 0;
 }
 
