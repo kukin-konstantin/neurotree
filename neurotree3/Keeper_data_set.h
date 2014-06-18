@@ -14,7 +14,7 @@ public:
 	~Keeper_data_set();
 	double get_number_of_examples(const int t_dim);
 	bool get_example_in_order(std::valarray<double > &v, const int dim);
-	void get_example_in_random_order(const char *name_number_cluster,std::valarray<double > &v, const double t_num_exam,const int t_dim);
+	void get_example_in_random_order(std::valarray<double > &v, const double t_num_exam,const int t_dim);
 	void split_file_in_pieces(const char *name_number_cluster,const int t_dim);
 private:
 	const char *name_file_data;

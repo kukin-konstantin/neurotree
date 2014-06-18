@@ -83,7 +83,7 @@ std::deque<std::valarray<double > > Keeper_data_set::update_data_block(const int
 				ok=false;
 			}
 		}
-		if (!ok)
+		if (i==t_dim-1)
 			t_data_block.push_back(v_tmp);
 		number_of_example--;
 	}
@@ -105,7 +105,7 @@ void  Keeper_data_set::split_file_in_pieces(const char *name_number_cluster,cons
 		std::string s_name_file_data_tmp1(name_number_cluster);
 		std::string s_name_file_data_tmp2(name_file_data);
 		std::string s_name_file_data=s_name_file_data_tmp1+"_part_"+str.str()+"_"+s_name_file_data_tmp2;
-		std::ofstream t_file_out(s_name_file_data.c_str());
+		std::ofstream t_file_out(s_name_file_data);
 		while ((stream_data)&&(t_number_of_example!=0))
 		{
 			bool ok=true;
@@ -124,7 +124,7 @@ void  Keeper_data_set::split_file_in_pieces(const char *name_number_cluster,cons
 					ok=false;
 				}
 			}
-			if (!ok)
+			if (i==t_dim-1)
 			{
 				for (int k=0;k!=t_dim-1;k++)
 				{
@@ -140,7 +140,7 @@ void  Keeper_data_set::split_file_in_pieces(const char *name_number_cluster,cons
 	}
 }
 
-void Keeper_data_set::get_example_in_random_order(const char *name_number_cluster,std::valarray<double > &v, const double t_num_exam,const int t_dim)
+void Keeper_data_set::get_example_in_random_order(std::valarray<double > &v, const double t_num_exam,const int t_dim)
 {
 	int k=0;
 	bool usl=true;
@@ -159,12 +159,8 @@ void Keeper_data_set::get_example_in_random_order(const char *name_number_cluste
 			k++;
 		}
 	}
-	std::stringstream str;
-	str<<k+1;
-	std::string s_name_file_data_tmp1(name_number_cluster);
-	std::string s_name_file_data_tmp2(name_file_data);
-	std::string s_name_file_data=s_name_file_data_tmp1+"_part_"+str.str()+"_"+s_name_file_data_tmp2;
-	get_n_order_vector_in_file(s_name_file_data.c_str(),v,int(tmp_num_exam_mem),t_dim);
+
+	
 }
 
 void Keeper_data_set::get_n_order_vector_in_file(const char *t_name_file_data,std::valarray<double > &v,const int t_num_exam,const int t_dim)
@@ -173,7 +169,7 @@ void Keeper_data_set::get_n_order_vector_in_file(const char *t_name_file_data,st
 	std::string s;
 	std::valarray<double > v_tmp(0.0,t_dim);
 	t_stream_data.open(t_name_file_data);
-	for (int i=0;i!=t_num_exam;i++)
+	for (int i=0;i!=t_num_exam-1;i++)
 	{
 		std::getline(t_stream_data,s);// вероятный источник ошибки при выползании за стандартную длину
 	}
