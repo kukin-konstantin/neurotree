@@ -7,6 +7,28 @@ name_file_data(t_name_file_data),allow_ram_volume(t_allow_ram_volume)
 	stream_data.open(t_name_file_data);
 }
 
+Keeper_data_set::Keeper_data_set(const Keeper_data_set &t):
+name_file_data(t.name_file_data),allow_ram_volume(t.allow_ram_volume)
+{
+	stream_data.clear();
+	stream_data.close();
+	stream_data.open(name_file_data);
+	number_of_examples_in_files=t.get_number_of_examples_in_files();
+	data_block=t.get_data_block();
+}
+
+Keeper_data_set & Keeper_data_set::operator=(const Keeper_data_set& t)
+{
+	name_file_data=t.get_name_file_data();
+	allow_ram_volume=t.get_allow_ram_volume();
+	stream_data.clear();
+	stream_data.close();
+	stream_data.open(name_file_data);
+	number_of_examples_in_files=t.get_number_of_examples_in_files();
+	data_block=t.get_data_block();
+	return *this;
+}
+
 Keeper_data_set::~Keeper_data_set()
 {
 	stream_data.clear();
@@ -186,4 +208,40 @@ void Keeper_data_set::get_n_order_vector_in_file(const char *t_name_file_data,st
 	t_stream_data.clear();
 	t_stream_data.close();
 	v=v_tmp;
+}
+
+void Keeper_data_set::clear(const char *name_number_cluster)
+{
+	int number_of_pieces=number_of_examples_in_files.size();
+	for (int k=0;k!=number_of_pieces;k++)
+	{
+		std::stringstream str;
+		str<<k+1;
+		std::string s_name_file_data_tmp1(name_number_cluster);
+		std::string s_name_file_data_tmp2(name_file_data);
+		std::string s_name_file_data=s_name_file_data_tmp1+"_part_"+str.str()+"_"+s_name_file_data_tmp2;
+		remove(s_name_file_data.c_str());
+	}
+	data_block.clear(); 
+}
+
+
+std::vector<int> Keeper_data_set::get_number_of_examples_in_files() const
+{
+	return  number_of_examples_in_files;
+}
+
+std::deque<std::valarray<double > >  Keeper_data_set::get_data_block() const
+{
+	return data_block;
+}
+
+const char * Keeper_data_set::get_name_file_data() const
+{
+	return name_file_data;
+}
+
+int Keeper_data_set::get_allow_ram_volume() const
+{
+	return allow_ram_volume;
 }

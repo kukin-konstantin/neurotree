@@ -11,15 +11,23 @@ class Keeper_data_set
 { 
 public:
 	Keeper_data_set(const char *t_name_file_data, const int t_allow_ram_volume);
+	Keeper_data_set(const Keeper_data_set &t);
+	Keeper_data_set &operator=(const Keeper_data_set& t);
 	~Keeper_data_set();
 	double get_number_of_examples(const int t_dim);
 	bool get_example_in_order(std::valarray<double > &v, const int dim);
 	void get_example_in_random_order(const char *name_number_cluster,std::valarray<double > &v, const double t_num_exam,const int t_dim);
 	void split_file_in_pieces(const char *name_number_cluster,const int t_dim);
+	void clear(const char *name_number_cluster);
+	//get-interface
+	std::vector<int> get_number_of_examples_in_files() const;
+	std::deque<std::valarray<double > > get_data_block() const;
+	const char * get_name_file_data() const;
+	int get_allow_ram_volume() const;
 private:
 	const char *name_file_data;
 	std::ifstream stream_data;
-	const int allow_ram_volume; // in Mb
+	int allow_ram_volume; // in Mb
 	std::vector<int> number_of_examples_in_files;
 	void get_n_order_vector_in_file(const char *t_name_file_data,std::valarray<double > &v,const int t_num_exam,const int t_dim);
 	std::deque<std::valarray<double > > data_block;

@@ -44,7 +44,8 @@ public:
 	void learn(); // �������� ������
 	void test(const char *t_name_file_data,const char *t_name_file_clusters,const char *t_name_file_result);
 	void print_in_tree_file(const char *t_name_file_tree);
-	void copy_data_set(std::deque<valarray<double > > &t_train_set,data_node &data);
+	//void copy_data_set(std::deque<valarray<double > > &t_train_set,data_node &data); // old version need to remove
+	void copy_data_set(Keeper_data_set &keep,data_node &data);
 	~Tree();
 private:
 	TreeNode *_root;
@@ -103,24 +104,25 @@ _root(0),name_file_data(t_name_file_data),accuar(t_accuar),max_number_cluster(t_
 {
 	dim=t_dim;
 	Keeper_data_set keep(name_file_data,t_memory_size);
+	size_data=keep.get_number_of_examples(dim);
 	valarray<double> v_pos_root=def_pos_root_node(keep);
 
-    //deque<valarray<double > > t_train_set=read_data_to_memory();
-	//size_data=t_train_set.size();
-	//valarray<double> v_pos_root=def_pos_root_node(t_train_set);
+    //deque<valarray<double > > t_train_set=read_data_to_memory(); //old version need to remove
+	//size_data=t_train_set.size(); //old version need to remove
+	//valarray<double> v_pos_root=def_pos_root_node(t_train_set); //old version need to remove
 	
-	data_node data(v_pos_root);
-	/*copy_data_set(t_train_set,data);
-	t_train_set.clear();
+
+	data_node data(v_pos_root,name_file_data,memory_size);
+	copy_data_set(keep,data);
+	//copy_data_set(t_train_set,data); //old version need to remove
+	//t_train_set.clear(); //old version need to remove
 	data.win=false;
 	data.number_node=1;
 	_root = new TreeNode(data);
-	copy_data_set(data.train_set,_root->_data);
+	//copy_data_set(data.train_set,_root->_data); //old version need to remove
 	last_layer.push_back(_root);
 	val_func=0;
-	last_number_clusters=0;*/
-	bool ok=true;
-	std::cout<<"afadf";
+	last_number_clusters=0;
 }
  
 Tree::Tree(const char *t_name_file_tree):
@@ -155,10 +157,10 @@ _root(0)
 		valarray<double> v_pos_root(0.0,dim);
 		if (read_vec(data_tree,v_pos_root))
 		{
-			data_node data(v_pos_root);
+			data_node data(v_pos_root,name_file_data,memory_size); //change check
 			data.win=false;
 			_root = new TreeNode(data);
-			copy_data_set(data.train_set,_root->_data);
+			//copy_data_set(data.train_set,_root->_data); // old version need to remove
 			data_tree>>s;
 			if (s=="Left")
 			{
@@ -182,7 +184,7 @@ _root(0)
 
 
 
-void Tree::copy_data_set(std::deque<valarray<double> > &t_train_set,data_node &data)
+/*void Tree::copy_data_set(std::deque<valarray<double> > &t_train_set,data_node &data) // old version need to remove
 {
 	int i=0;
 	while (!t_train_set.empty())
@@ -191,6 +193,11 @@ void Tree::copy_data_set(std::deque<valarray<double> > &t_train_set,data_node &d
 		t_train_set.pop_front();
 	}
 	//std::copy(t_train_set.begin(),t_train_set.end(),std::back_inserter(data.train_set));
+}*/
+
+void Tree::copy_data_set(Keeper_data_set &keep,data_node &data)
+{
+	data.set_keep_data(keep);
 }
 
 void Tree::print_in_tree_file(const char *t_name_file_tree)
@@ -259,7 +266,7 @@ void Tree::learn()
 void Tree::test(const char *t_name_file_data,const char *t_name_file_clusters,const char *t_name_file_result)
 {
 	name_file_data=t_name_file_data;
-    deque<valarray<double > > t_test_set=read_data_to_memory();
+    deque<valarray<double > > t_test_set=read_data_to_memory(); // исключить keep_data_set
 	double (Norm::*f_norm) (const valarray<double>&) =0;
 	if (norm==Evkl)
 	{
@@ -289,7 +296,7 @@ void Tree::test(const char *t_name_file_data,const char *t_name_file_clusters,co
 	valarray<double> v_tmp(0.0,dim);
 	ofstream data_result(t_name_file_result);
 	cout<<"result clustering"<<"\n";//add
-	for (unsigned int i=0;i!=t_test_set.size();i++)
+	for (unsigned int i=0;i!=t_test_set.size();i++) // заменить цикл на keep_data_set
 	{
 		v_tmp=t_test_set[i];
 		/*data_result<<get_near_cluster(v_tmp,f_norm)<<"\n";* old*/
@@ -467,7 +474,7 @@ void Tree::expand_neuron(int first_index,int last_index)
 	for (int i = first_index; i < last_index; ++i)
 	{
 		T_tmp=last_layer[i];
-		data_node data(T_tmp->_data.pos_clus);
+		data_node data(T_tmp->_data.pos_clus,name_file_data,memory_size);
 		data.win=false;
 		T_tmp_left = new TreeNode(data);
 		T_tmp_right = new TreeNode(data);
@@ -511,18 +518,18 @@ void Tree::learn_neuron(Gener &A,double (Norm::*f_norm) (const valarray<double>&
 	for (int i_num_node = first_index; i_num_node < last_index; ++i_num_node)
 	{
 		T_tmp=last_layer[i_num_node];
-		size_train_data=T_tmp->_data.train_set.size();
+		//size_train_data=T_tmp->_data.train_set.size(); //изменить keep_data_set
 		for (int j=0;j!=number_iter;j++) // ��������
 		{
 			x=dob+(j*(log((1.0/accuar)-1.0)-dob))/number_iter;
-			Conver pock(size_train_data);
+			Conver pock(size_train_data);//изменить keep_data_set
 			int i;
-			while (!pock.empty())
+			while (!pock.empty())//изменить keep_data_set
 			{
 				i=pock.get_num(A);
 				pos_clus_left=T_tmp->_left->_data.pos_clus;
 				pos_clus_right=T_tmp->_right->_data.pos_clus;
-				v_tmp=T_tmp->_data.train_set[i];
+				//v_tmp=T_tmp->_data.train_set[i]; // изменить keep_data_set
 				shift_clus_left=v_tmp-pos_clus_left;
 				shift_clus_right=v_tmp-pos_clus_right;
 				norma_l=(o_norm->*f_norm)(shift_clus_left);
@@ -603,10 +610,10 @@ void Tree::del_dead_neuron(double (Norm::*f_norm) (const valarray<double>&),int 
 		}
 		else
 		{
-			int n_max=T_tmp->_data.train_set.size();
+			//int n_max=T_tmp->_data.train_set.size(); // изменить keep_data_set
 			//for (unsigned int i=0;i!=T_tmp->_data.train_set.size();i++)
-			int i=n_max-1;
-			while (!T_tmp->_data.train_set.empty())
+			//int i=n_max-1; // изменить keep_data_set
+			/*while (!T_tmp->_data.train_set.empty()) // изменить keep_data_set
 			{
 				v_tmp=T_tmp->_data.train_set[i];
 				shift_clus_left=v_tmp-pos_clus_left;
@@ -623,7 +630,7 @@ void Tree::del_dead_neuron(double (Norm::*f_norm) (const valarray<double>&),int 
 				}
 				T_tmp->_data.train_set.pop_back();
 				i--;
-			}
+			}*/
 			//T_tmp->_data.train_set.clear();
 			tmp_layer_local.push_back(T_tmp_left);
 			tmp_layer_local.push_back(T_tmp_right);
@@ -682,14 +689,14 @@ void Tree::cond_exit_acc(double (Norm::*f_norm) (const valarray<double>&),int fi
 	{
 		T_tmp=last_layer[i_num_node];
 		v_pos_clus=T_tmp->_data.pos_clus;
-		for (unsigned int i=0;i!=T_tmp->_data.train_set.size();i++)
+		/*for (unsigned int i=0;i!=T_tmp->_data.train_set.size();i++) //изменить keep_data_set
 		{
 				v_tmp=T_tmp->_data.train_set[i];
 				v_shift=v_tmp-v_pos_clus;
 				d_tmp=(o_norm->*f_norm)(v_shift);
 				boost::mutex::scoped_lock lock(acc_mutex);
 				summa_acc+=(d_tmp*d_tmp)/size_data;
-		}
+		}*/
 	}
 }
 
@@ -802,14 +809,14 @@ void Tree::load_tree_from_file_helper(TreeNode *node,string &s,ifstream &t_data_
 					{
 						v_pos_root[i+1]=v_tmp[i];
 					}
-					data_node data(v_pos_root);
+					data_node data(v_pos_root,name_file_data,memory_size); //change check
 					data.win=false;
 					//изменение 13.11.12
 					data.number_node_vec=sh_vec;
 					sh_vec++;
 					//изменение 13.11.12
 					node->_left = new TreeNode(data);
-					copy_data_set(data.train_set,node->_left->_data);
+					//copy_data_set(data.train_set,node->_left->_data); //изменить keep_data_set
 					t_data_tree>>s;
 					load_tree_from_file_helper(node->_left,s,t_data_tree,sh,sh_vec);
 					load_tree_from_file_helper(node,s,t_data_tree,sh,sh_vec);
@@ -822,14 +829,14 @@ void Tree::load_tree_from_file_helper(TreeNode *node,string &s,ifstream &t_data_
 		valarray<double> v_pos_root(0.0,dim);
 		if (read_vec(t_data_tree,v_pos_root))
 		{	
-			data_node data(v_pos_root);
+			data_node data(v_pos_root,name_file_data,memory_size); //change check
 			data.win=false;
 			//изменение 13.11.12
 			data.number_node_vec=sh_vec;
 			sh_vec++;
 			//изменение 13.11.12
 			node->_right = new TreeNode(data);
-			copy_data_set(data.train_set,node->_right->_data);
+			//copy_data_set(data.train_set,node->_right->_data); // old version need to remove
 			t_data_tree>>s;
 			load_tree_from_file_helper(node->_right,s,t_data_tree,sh,sh_vec);
 		}

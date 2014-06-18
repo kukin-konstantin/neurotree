@@ -37,18 +37,23 @@ struct data_node // ������ ������������ � 
 	valarray<double> pos_clus; // ���������� ��������
 	bool win; // �������� �� �������?
 	int number_node;
-	int number_node_vec;
+	int number_node_vec; //номер кластера
 	data_node(valarray<double> t_pos_clus,const char *t_name_file_data,const int t_memory_size):
 	pos_clus(t_pos_clus),keep_data(t_name_file_data,t_memory_size)
 	{
 	   win=false;
 	}
-	data_node(const data_node& data)
+	data_node(const data_node& data):
+	keep_data(data.keep_data)
 	{
 		pos_clus=data.pos_clus;
 		win=data.win;
 		number_node=data.number_node;
 		number_node_vec=data.number_node_vec;
+	}
+	void set_keep_data(Keeper_data_set &t_keep_data)
+	{
+	   keep_data=t_keep_data;
 	}
 };
 
@@ -61,37 +66,21 @@ public:
     TreeNode(data_node &); // ����������� ������������
  
     data_node get_data() const; // ������ ������ ����������� ����
-	void copy_data_set(std::deque<valarray<double > > &t_train_set);
+	//void copy_data_set(std::deque<valarray<double > > &t_train_set); //old_version need to remove
 private:
     data_node _data; 
     TreeNode *_left;
     TreeNode *_right;
 };
 
-/*
-TreeNode::TreeNode():
-_left(0),
-_right(0)
-{
-}
-*/
- 
+
 
 TreeNode::TreeNode(data_node &data):
 _data(data),
 _left(0),
 _right(0)
 {
-	/*_data.number_node=data.number_node;
-	_data.number_node_vec=data.number_node_vec;
-	_data.pos_clus=data.pos_clus;
-	_data.win=data.win;
-	int i=0;
-	while (!data.train_set.empty())
-	{
-		_data.train_set.push_back(data.train_set[i]);
-		data.train_set.pop_front();
-	}*/
+
 }
  
 
@@ -100,7 +89,7 @@ data_node TreeNode::get_data() const
     return _data;
 }
 
-void TreeNode::copy_data_set(std::deque<valarray<double > > &t_train_set)
+/*void TreeNode::copy_data_set(std::deque<valarray<double > > &t_train_set)//old_version need to remove
 {
 	int i=0;
 	while (!t_train_set.empty())
@@ -108,6 +97,6 @@ void TreeNode::copy_data_set(std::deque<valarray<double > > &t_train_set)
 		_data.train_set.push_back(t_train_set[i]);
 		t_train_set.pop_front();
 	}
-}
+}*/
 
 #endif
