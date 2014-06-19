@@ -77,7 +77,7 @@ private:
 	valarray<double> def_pos_root_node(std::deque<valarray<double > > &t_train_set);//����������� ��������� ��������� �������
 	valarray<double> def_pos_root_node(Keeper_data_set &keep);
 	void expand_neuron_m_thread(int num_nodes,int num_threads);
-	void expand_neuron(int first_index,int last_index); // � �������� ����������� ��������� ���������� map<TreeNode *,int>
+	void expand_neuron(int first_index,int last_index,int num_calc_node); // � �������� ����������� ��������� ���������� map<TreeNode *,int>
 	void learn_neuron_m_thread(int num_nodes,int num_threads,double (Norm::*f_norm) (const valarray<double>&));
 	void learn_neuron(Gener &A,double (Norm::*f_norm) (const valarray<double>&),int first_index,int last_index); // ������� ������� ���������� ������
 	void learn_acc(double (Norm::*f_norm) (const valarray<double>&));  //обучение по точности, временно не поддерживается
@@ -108,8 +108,8 @@ _root(0),name_file_data(t_name_file_data),accuar(t_accuar),max_number_cluster(t_
 	valarray<double> v_pos_root=def_pos_root_node(keep);
 
     //deque<valarray<double > > t_train_set=read_data_to_memory(); //old version need to remove
-	//size_data=t_train_set.size(); //old version need to remove
-	//valarray<double> v_pos_root=def_pos_root_node(t_train_set); //old version need to remove
+	//size_data=t_train_set.size();                               //old version need to remove
+	//valarray<double> v_pos_root=def_pos_root_node(t_train_set);//old version need to remove
 	
 
 	data_node data(v_pos_root,name_file_data,memory_size);
@@ -466,7 +466,7 @@ void Tree::learn_max_number(double (Norm::*f_norm) (const valarray<double>&))
 	}
 }
 
-void Tree::expand_neuron(int first_index,int last_index)
+void Tree::expand_neuron(int first_index,int last_index, int num_calc_node)
 {
 	TreeNode * T_tmp;
 	TreeNode * T_tmp_left;
@@ -474,7 +474,7 @@ void Tree::expand_neuron(int first_index,int last_index)
 	for (int i = first_index; i < last_index; ++i)
 	{
 		T_tmp=last_layer[i];
-		data_node data(T_tmp->_data.pos_clus,name_file_data,memory_size);
+		data_node data(T_tmp->_data.pos_clus,name_file_data,memory_size/(2*num_calc_node)); // деление выделенной памяти на два
 		data.win=false;
 		T_tmp_left = new TreeNode(data);
 		T_tmp_right = new TreeNode(data);
@@ -497,7 +497,7 @@ void Tree::expand_neuron_m_thread(int num_nodes,int num_threads)
 	}
 	boost::thread_group threads;
 	for (int i=0; i<num_calc_node; ++i)
-		threads.create_thread(boost::bind(&Tree::expand_neuron,this,i*num_nodes/num_calc_node, (i+1)*num_nodes/num_calc_node));
+		threads.create_thread(boost::bind(&Tree::expand_neuron,this,i*num_nodes/num_calc_node, (i+1)*num_nodes/num_calc_node,num_calc_node));
 	threads.join_all();
 }
 
@@ -518,7 +518,11 @@ void Tree::learn_neuron(Gener &A,double (Norm::*f_norm) (const valarray<double>&
 	for (int i_num_node = first_index; i_num_node < last_index; ++i_num_node)
 	{
 		T_tmp=last_layer[i_num_node];
+		std::string  s_tmp=std::to_string(T_tmp->_data.number_node);
+		const char *name_number_cluster=s_tmp.c_str();
+		T_tmp->_data.keep_data.split_file_in_pieces(name_number_cluster,dim);
 		//size_train_data=T_tmp->_data.train_set.size(); //изменить keep_data_set
+		size_train_data=int(T_tmp->_data.keep_data.get_number_of_examples(dim));
 		for (int j=0;j!=number_iter;j++) // ��������
 		{
 			x=dob+(j*(log((1.0/accuar)-1.0)-dob))/number_iter;
@@ -530,6 +534,8 @@ void Tree::learn_neuron(Gener &A,double (Norm::*f_norm) (const valarray<double>&
 				pos_clus_left=T_tmp->_left->_data.pos_clus;
 				pos_clus_right=T_tmp->_right->_data.pos_clus;
 				//v_tmp=T_tmp->_data.train_set[i]; // изменить keep_data_set
+
+				T_tmp->_data.keep_data.get_example_in_random_order(name_number_cluster,v_tmp,double(i),dim);
 				shift_clus_left=v_tmp-pos_clus_left;
 				shift_clus_right=v_tmp-pos_clus_right;
 				norma_l=(o_norm->*f_norm)(shift_clus_left);
@@ -546,6 +552,7 @@ void Tree::learn_neuron(Gener &A,double (Norm::*f_norm) (const valarray<double>&
 				}
 			}
 		}
+		T_tmp->_data.keep_data.clear(name_number_cluster);
 	}
 }
 

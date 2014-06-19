@@ -4,6 +4,7 @@
 Keeper_data_set::Keeper_data_set(const char *t_name_file_data,const int t_allow_ram_volume):
 name_file_data(t_name_file_data),allow_ram_volume(t_allow_ram_volume)
 {
+	assert(allow_ram_volume>0); // если выделяемая память меньше нуля, то прекратить выполнение программы
 	stream_data.open(t_name_file_data);
 }
 

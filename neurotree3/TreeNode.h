@@ -55,6 +55,10 @@ struct data_node // ������ ������������ � 
 	{
 	   keep_data=t_keep_data;
 	}
+	int get_memory_size()
+	{
+		return keep_data.get_allow_ram_volume();
+	}
 };
 
 class TreeNode

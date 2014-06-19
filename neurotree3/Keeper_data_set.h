@@ -6,6 +6,7 @@
 #include <vector>
 #include <deque>
 #include <valarray>
+#include <assert.h>
 
 class Keeper_data_set
 { 
