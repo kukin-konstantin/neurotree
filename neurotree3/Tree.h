@@ -96,6 +96,7 @@ private:
 	void get_average_dist_in_clusters(vector<double> &average_cluster_rad,vector<int> &numbers_data_to_one_cluster);// future change: add possibility change name file
 	void get_dist_between_clusters(double (Norm::*f_norm) (const valarray<double>&));
 	void error();
+	void get_random_list(std::vector<int> &v_random_list,Gener &A,Conver &pock);
 };
  
 
@@ -515,6 +516,7 @@ void Tree::learn_neuron(Gener &A,double (Norm::*f_norm) (const valarray<double>&
 	int size_train_data;
 	double x;
 	double dob=1.0986;//������������ �������� ������� alpha 0.25
+	std::vector<int> v_random_list;
 	for (int i_num_node = first_index; i_num_node < last_index; ++i_num_node)
 	{
 		T_tmp=last_layer[i_num_node];
@@ -528,6 +530,8 @@ void Tree::learn_neuron(Gener &A,double (Norm::*f_norm) (const valarray<double>&
 			x=dob+(j*(log((1.0/accuar)-1.0)-dob))/number_iter;
 			Conver pock(size_train_data);//изменить keep_data_set
 			int i;
+			get_random_list(v_random_list,A,pock);
+			T_tmp->_data.keep_data.prepare_out_in_random_order(name_number_cluster,v_random_list);
 			while (!pock.empty())//изменить keep_data_set
 			{
 				i=pock.get_num(A);
@@ -980,6 +984,16 @@ void Tree::get_dist_between_clusters(double (Norm::*f_norm) (const valarray<doub
 void Tree::error()
 {
 	cout<<"Use the correct Tree file"<<"\n";
+}
+
+void Tree::get_random_list(std::vector<int> &v_random_list,Gener &A,Conver &pock)
+{
+	int i;
+	while (!pock.empty())
+	{
+		i=pock.get_num(A);
+		v_random_list.push_back(i);
+	}
 }
 
 #endif

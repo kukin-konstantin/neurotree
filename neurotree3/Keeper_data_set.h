@@ -7,6 +7,7 @@
 #include <deque>
 #include <valarray>
 #include <assert.h>
+#include "conver.h"
 
 class Keeper_data_set
 { 
@@ -17,6 +18,7 @@ public:
 	~Keeper_data_set();
 	double get_number_of_examples(const int t_dim);
 	bool get_example_in_order(std::valarray<double > &v, const int dim);
+	void prepare_out_in_random_order(const char *name_number_cluster,std::vector<int> &v_random_list);//разбивает на файлы в соответсвии с подаваемым порядком
 	void get_example_in_random_order(const char *name_number_cluster,std::valarray<double > &v, const double t_num_exam,const int t_dim);
 	void split_file_in_pieces(const char *name_number_cluster,const int t_dim);
 	void clear(const char *name_number_cluster);
@@ -30,9 +32,11 @@ private:
 	std::ifstream stream_data;
 	int allow_ram_volume; // in Mb
 	std::vector<int> number_of_examples_in_files;
+	std::pair<int,int> get_num_of_file_and_num_of_line(const double t_num_exam); // по номеру примера в большом файле отыскивает маленький файл и номер примера в маленьком файле
 	void get_n_order_vector_in_file(const char *t_name_file_data,std::valarray<double > &v,const int t_num_exam,const int t_dim);
 	std::deque<std::valarray<double > > data_block;
 	std::deque<std::valarray<double > > update_data_block(const int t_dim);
+	std::deque<std::valarray<double > > get_examples_from_file(std::string t_name_file,const int t_dim);
 };
 
 

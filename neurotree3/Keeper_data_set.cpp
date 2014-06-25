@@ -163,7 +163,50 @@ void  Keeper_data_set::split_file_in_pieces(const char *name_number_cluster,cons
 	}
 }
 
+void Keeper_data_set::prepare_out_in_random_order(const char *name_number_cluster,std::vector<int> &v_random_list,const int t_dim)
+{
+	std::vector<std::vector<int> > v_random_list_in_group;
+	v_random_list_in_group.resize(number_of_examples_in_files.size());
+	for (int x:v_random_list) // new feature c++11
+	{
+		std::pair<int,int> pair_tmp=get_num_of_file_and_num_of_line(double(x));
+		v_random_list_in_group[pair_tmp.first].push_back(pair_tmp.second);
+	}
+	for (int k=0;k!=number_of_examples_in_files.size();k++)
+	{
+		std::stringstream str;
+		str<<k+1;
+		std::string s_name_file_data_tmp1(name_number_cluster);
+		std::string s_name_file_data_tmp2(name_file_data);
+		std::string s_name_file_data=s_name_file_data_tmp1+"_part_"+str.str()+"_random_"+s_name_file_data_tmp2;
+		std::ofstream t_file_out(s_name_file_data.c_str());
+		
+		t_file_out.clear();
+		t_file_out.close();
+	}
+}
+
+std::deque<std::valarray<double > > Keeper_data_set::get_examples_from_file(std::string t_name_file,const int t_dim)
+{
+	std::deque<std::valarray<double > > t_data_block;
+	Keeper_data_set t(t_name_file.c_str(),
+	return t_data_block;
+}
+
 void Keeper_data_set::get_example_in_random_order(const char *name_number_cluster,std::valarray<double > &v, const double t_num_exam,const int t_dim)
+{
+	std::pair<int,int> pair_tmp=get_num_of_file_and_num_of_line(t_num_exam);
+	int k=pair_tmp.first;
+	double tmp_num_exam_mem=pair_tmp.second;
+	std::stringstream str;
+	str<<k+1;
+	std::string s_name_file_data_tmp1(name_number_cluster);
+	std::string s_name_file_data_tmp2(name_file_data);
+	std::string s_name_file_data=s_name_file_data_tmp1+"_part_"+str.str()+"_"+s_name_file_data_tmp2;
+	get_n_order_vector_in_file(s_name_file_data.c_str(),v,int(tmp_num_exam_mem),t_dim);
+}
+
+std::pair<int,int> Keeper_data_set::get_num_of_file_and_num_of_line(const double t_num_exam)
 {
 	int k=0;
 	bool usl=true;
@@ -182,12 +225,8 @@ void Keeper_data_set::get_example_in_random_order(const char *name_number_cluste
 			k++;
 		}
 	}
-	std::stringstream str;
-	str<<k+1;
-	std::string s_name_file_data_tmp1(name_number_cluster);
-	std::string s_name_file_data_tmp2(name_file_data);
-	std::string s_name_file_data=s_name_file_data_tmp1+"_part_"+str.str()+"_"+s_name_file_data_tmp2;
-	get_n_order_vector_in_file(s_name_file_data.c_str(),v,int(tmp_num_exam_mem),t_dim);
+	std::pair<int,int> tmp_pair(k,tmp_num_exam_mem);
+	return tmp_pair;
 }
 
 void Keeper_data_set::get_n_order_vector_in_file(const char *t_name_file_data,std::valarray<double > &v,const int t_num_exam,const int t_dim)
