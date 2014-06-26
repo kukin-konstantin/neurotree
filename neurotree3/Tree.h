@@ -531,7 +531,7 @@ void Tree::learn_neuron(Gener &A,double (Norm::*f_norm) (const valarray<double>&
 			Conver pock(size_train_data);//изменить keep_data_set
 			int i;
 			get_random_list(v_random_list,A,pock);
-			T_tmp->_data.keep_data.prepare_out_in_random_order(name_number_cluster,v_random_list);
+			T_tmp->_data.keep_data.prepare_out_in_random_order(name_number_cluster,v_random_list,dim);
 			while (!pock.empty())//изменить keep_data_set
 			{
 				i=pock.get_num(A);

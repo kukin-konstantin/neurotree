@@ -82,6 +82,11 @@ bool Keeper_data_set::get_example_in_order(std::valarray<double > &v, const int 
 	}
 }
 
+void Keeper_data_set::get_example_in_random_order_whole_piece(std::valarray<double > &v, const int num_exam)
+{
+	v=data_block[num_exam];
+}
+
 std::deque<std::valarray<double > > Keeper_data_set::update_data_block(const int t_dim)
 {
 	std::deque<std::valarray<double > > t_data_block;
@@ -163,35 +168,88 @@ void  Keeper_data_set::split_file_in_pieces(const char *name_number_cluster,cons
 	}
 }
 
-void Keeper_data_set::prepare_out_in_random_order(const char *name_number_cluster,std::vector<int> &v_random_list,const int t_dim)
+bool Keeper_data_set::prepare_out_in_random_order(const char *name_number_cluster,std::vector<int> &v_random_list,const int t_dim) //to big for function
 {
-	std::vector<std::vector<int> > v_random_list_in_group;
-	v_random_list_in_group.resize(number_of_examples_in_files.size());
-	for (int x:v_random_list) // new feature c++11
+	if (number_of_examples_in_files.size()!=1) // 1 - количество кусков разбиения, нельзя всё поместить в память
 	{
-		std::pair<int,int> pair_tmp=get_num_of_file_and_num_of_line(double(x));
-		v_random_list_in_group[pair_tmp.first].push_back(pair_tmp.second);
+		std::vector<std::vector<int> > v_random_list_in_group;
+		v_random_list_in_group.resize(number_of_examples_in_files.size());
+		for (int x:v_random_list) // new feature c++11
+		{
+			std::pair<int,int> pair_tmp=get_num_of_file_and_num_of_line(double(x));
+			v_random_list_in_group[pair_tmp.first].push_back(pair_tmp.second);
+		}
+		std::vector<std::shared_ptr<std::ifstream> > v_files_in;
+		std::vector<std::shared_ptr<std::ofstream> > v_files_out;
+		for (int k=0;k!=number_of_examples_in_files.size();k++)
+		{
+			std::stringstream str;
+			str<<k+1;
+			std::string s_name_file_data_tmp1(name_number_cluster);
+			std::string s_name_file_data_tmp2(name_file_data);
+			std::string s_name_file_data_out=s_name_file_data_tmp1+"_part_"+str.str()+"_random_"+s_name_file_data_tmp2;
+			std::string s_name_file_data_in=s_name_file_data_tmp1+"_part_"+str.str()+"_"+s_name_file_data_tmp2;
+			//std::ofstream t_file_out(s_name_file_data.c_str());
+			v_files_out.push_back(std::make_shared<ofstream>(s_name_file_data_out.c_str()));
+			v_files_in.push_back(std::make_shared<ifstream>(s_name_file_data_in.c_str()));
+		}
+		for (int k=0;k!=number_of_examples_in_files.size();k++)
+		{
+			std::valarray<double > v_tmp(0.0,t_dim);
+			std::deque<std::valarray<double > > t_data_block;
+			while ((*v_files_in[k]))
+			{
+				bool ok=true;
+				int i=0;
+				double i_tmp;
+				while (((*v_files_in[k]))&&(ok))
+				{
+					v_files_in[k]->operator>>(i_tmp);
+					v_tmp[i]=i_tmp;
+					if (i!=t_dim-1)
+					{
+						i++;
+					}
+					else
+					{
+						ok=false;
+					}
+				}
+				if (!ok)
+					t_data_block.push_back(v_tmp);
+			}
+			for (int j=0;j!=v_random_list_in_group[k].size();j++)
+			{
+				for (double x :t_data_block[v_random_list_in_group[k][j]])
+				{
+					v_files_out[k]->operator<<(x);
+					v_files_out[k]->operator<<("\t");
+				}
+				v_files_out[k]->operator<<("\n");
+			}
+		}
+		for (int k=0;k!=number_of_examples_in_files.size();k++)
+		{
+			v_files_out[k]->clear();
+			v_files_out[k]->close();
+			v_files_in[k]->clear();
+			v_files_in[k]->close();
+		}
+	    return false;
 	}
-	for (int k=0;k!=number_of_examples_in_files.size();k++)
+	else // можно всё сразу поместить в память
 	{
-		std::stringstream str;
-		str<<k+1;
-		std::string s_name_file_data_tmp1(name_number_cluster);
-		std::string s_name_file_data_tmp2(name_file_data);
-		std::string s_name_file_data=s_name_file_data_tmp1+"_part_"+str.str()+"_random_"+s_name_file_data_tmp2;
-		std::ofstream t_file_out(s_name_file_data.c_str());
-		
-		t_file_out.clear();
-		t_file_out.close();
+		data_block=update_data_block(t_dim);
+		return true;
 	}
 }
 
-std::deque<std::valarray<double > > Keeper_data_set::get_examples_from_file(std::string t_name_file,const int t_dim)
+/*std::deque<std::valarray<double > > Keeper_data_set::get_examples_from_file(std::string t_name_file,const int t_dim)
 {
 	std::deque<std::valarray<double > > t_data_block;
-	Keeper_data_set t(t_name_file.c_str(),
+	Keeper_data_set t(t_name_file.c_str(),this->allow_ram_volume);
 	return t_data_block;
-}
+}*/
 
 void Keeper_data_set::get_example_in_random_order(const char *name_number_cluster,std::valarray<double > &v, const double t_num_exam,const int t_dim)
 {
