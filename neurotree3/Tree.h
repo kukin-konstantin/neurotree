@@ -82,6 +82,7 @@ private:
 	void learn_neuron(Gener &A,double (Norm::*f_norm) (const valarray<double>&),int first_index,int last_index); // ������� ������� ���������� ������
 	void learn_acc(double (Norm::*f_norm) (const valarray<double>&));  //обучение по точности, временно не поддерживается
 	void learn_max_number(double (Norm::*f_norm) (const valarray<double>&)); // �������� ���������� �������� ������������ ���������� ���������
+	void learn_one_iteration(TreeNode * T_tmp,double (Norm::*f_norm) (const valarray<double>&),const char *name_number_cluster,valarray<double> &v_tmp,double x);
 	void cond_exit_acc(double (Norm::*f_norm) (const valarray<double>&),int first_index,int last_index); // posible to split thread
 	bool cond_exit_acc_m_thread(int num_nodes,int num_threads,double (Norm::*f_norm) (const valarray<double>&));
 	bool cond_exit_max_number();
@@ -505,14 +506,6 @@ void Tree::expand_neuron_m_thread(int num_nodes,int num_threads)
 void Tree::learn_neuron(Gener &A,double (Norm::*f_norm) (const valarray<double>&),int first_index,int last_index)
 {
 	TreeNode * T_tmp;
-	valarray<double> v_tmp(0.0,dim);
-	valarray<double> pos_clus_left(0.0,dim);
-	valarray<double> pos_clus_right(0.0,dim);
-	valarray<double> shift_clus_left(0.0,dim);
-	valarray<double> shift_clus_right(0.0,dim);
-	Norm *o_norm=0;
-	double norma_l;
-	double norma_r;
 	int size_train_data;
 	double x;
 	double dob=1.0986;//������������ �������� ������� alpha 0.25
@@ -529,30 +522,23 @@ void Tree::learn_neuron(Gener &A,double (Norm::*f_norm) (const valarray<double>&
 		{
 			x=dob+(j*(log((1.0/accuar)-1.0)-dob))/number_iter;
 			Conver pock(size_train_data);//изменить keep_data_set
-			int i;
 			get_random_list(v_random_list,A,pock);
-			T_tmp->_data.keep_data.prepare_out_in_random_order(name_number_cluster,v_random_list,dim);
-			while (!pock.empty())//изменить keep_data_set
+			if (T_tmp->_data.keep_data.prepare_out_in_random_order(name_number_cluster,v_random_list,dim)) // можно поместить в память
 			{
-				i=pock.get_num(A);
-				pos_clus_left=T_tmp->_left->_data.pos_clus;
-				pos_clus_right=T_tmp->_right->_data.pos_clus;
-				//v_tmp=T_tmp->_data.train_set[i]; // изменить keep_data_set
-
-				T_tmp->_data.keep_data.get_example_in_random_order(name_number_cluster,v_tmp,double(i),dim);
-				shift_clus_left=v_tmp-pos_clus_left;
-				shift_clus_right=v_tmp-pos_clus_right;
-				norma_l=(o_norm->*f_norm)(shift_clus_left);
-				norma_r=(o_norm->*f_norm)(shift_clus_right);
-				if (norma_l<=norma_r)
+				valarray<double> v_tmp(0.0,dim);
+				while (T_tmp->_data.keep_data.get_top_element_data_block(v_tmp))
 				{
-					T_tmp->_left->_data.pos_clus=T_tmp->_left->_data.pos_clus+alpha(x)*shift_clus_left;
-					T_tmp->_left->_data.win=true;
+					learn_one_iteration(T_tmp,f_norm,name_number_cluster,v_tmp,x);
 				}
-				else
+			}
+			else // нельзя поместить в память
+			{
+				valarray<double> v_tmp(0.0,dim);
+				T_tmp->_data.keep_data.link_vector_stream_with_files(name_number_cluster);
+				for (int random_num:v_random_list)
 				{
-					T_tmp->_right->_data.pos_clus=T_tmp->_right->_data.pos_clus+alpha(x)*shift_clus_right;
-					T_tmp->_right->_data.win=true;
+					//делать здесь//здесь должна быть выдача случайного вектора из файлов по запросу- его порядковому номеру
+					learn_one_iteration(T_tmp,f_norm,name_number_cluster,v_tmp,x);
 				}
 			}
 		}
@@ -560,6 +546,35 @@ void Tree::learn_neuron(Gener &A,double (Norm::*f_norm) (const valarray<double>&
 	}
 }
 
+
+void Tree::learn_one_iteration(TreeNode * T_tmp,double (Norm::*f_norm) (const valarray<double>&),const char *name_number_cluster,valarray<double> &v_tmp,double x)
+{
+	valarray<double> pos_clus_left(0.0,dim);
+	valarray<double> pos_clus_right(0.0,dim);
+	valarray<double> shift_clus_left(0.0,dim);
+	valarray<double> shift_clus_right(0.0,dim);
+	Norm *o_norm=0;
+	double norma_l;
+	double norma_r;
+	pos_clus_left=T_tmp->_left->_data.pos_clus;
+	pos_clus_right=T_tmp->_right->_data.pos_clus;
+	//v_tmp=T_tmp->_data.train_set[i]; // изменить keep_data_set
+	//T_tmp->_data.keep_data.get_example_in_random_order(name_number_cluster,v_tmp,double(i),dim);
+	shift_clus_left=v_tmp-pos_clus_left;
+	shift_clus_right=v_tmp-pos_clus_right;
+	norma_l=(o_norm->*f_norm)(shift_clus_left);
+	norma_r=(o_norm->*f_norm)(shift_clus_right);
+	if (norma_l<=norma_r)
+	{
+		T_tmp->_left->_data.pos_clus=T_tmp->_left->_data.pos_clus+alpha(x)*shift_clus_left;
+		T_tmp->_left->_data.win=true;
+	}
+	else
+	{
+		T_tmp->_right->_data.pos_clus=T_tmp->_right->_data.pos_clus+alpha(x)*shift_clus_right;
+		T_tmp->_right->_data.win=true;
+	}
+}
 
 
 void Tree::learn_neuron_m_thread(int num_nodes,int num_threads,double (Norm::*f_norm) (const valarray<double>&))

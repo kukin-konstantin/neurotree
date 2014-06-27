@@ -174,14 +174,14 @@ bool Keeper_data_set::prepare_out_in_random_order(const char *name_number_cluste
 	{
 		std::vector<std::vector<int> > v_random_list_in_group;
 		v_random_list_in_group.resize(number_of_examples_in_files.size());
-		for (int x:v_random_list) // new feature c++11
+		for (int x:v_random_list) // разбиение набора случайных номеров 1-мерного вектора на k штук по количеству файлов разбиения
 		{
 			std::pair<int,int> pair_tmp=get_num_of_file_and_num_of_line(double(x));
 			v_random_list_in_group[pair_tmp.first].push_back(pair_tmp.second);
 		}
 		std::vector<std::shared_ptr<std::ifstream> > v_files_in;
 		std::vector<std::shared_ptr<std::ofstream> > v_files_out;
-		for (int k=0;k!=number_of_examples_in_files.size();k++)
+		for (int k=0;k!=number_of_examples_in_files.size();k++) //привязка входных-выходных файлов к вектору
 		{
 			std::stringstream str;
 			str<<k+1;
@@ -189,15 +189,14 @@ bool Keeper_data_set::prepare_out_in_random_order(const char *name_number_cluste
 			std::string s_name_file_data_tmp2(name_file_data);
 			std::string s_name_file_data_out=s_name_file_data_tmp1+"_part_"+str.str()+"_random_"+s_name_file_data_tmp2;
 			std::string s_name_file_data_in=s_name_file_data_tmp1+"_part_"+str.str()+"_"+s_name_file_data_tmp2;
-			//std::ofstream t_file_out(s_name_file_data.c_str());
 			v_files_out.push_back(std::make_shared<ofstream>(s_name_file_data_out.c_str()));
 			v_files_in.push_back(std::make_shared<ifstream>(s_name_file_data_in.c_str()));
 		}
-		for (int k=0;k!=number_of_examples_in_files.size();k++)
+		for (int k=0;k!=number_of_examples_in_files.size();k++) // цикл по разделенным файлам, k - индекс файла
 		{
 			std::valarray<double > v_tmp(0.0,t_dim);
 			std::deque<std::valarray<double > > t_data_block;
-			while ((*v_files_in[k]))
+			while ((*v_files_in[k])) // считывание блока k в память
 			{
 				bool ok=true;
 				int i=0;
@@ -218,28 +217,33 @@ bool Keeper_data_set::prepare_out_in_random_order(const char *name_number_cluste
 				if (!ok)
 					t_data_block.push_back(v_tmp);
 			}
-			for (int j=0;j!=v_random_list_in_group[k].size();j++)
+			for (int j=0;j!=v_random_list_in_group[k].size();j++)// цикл по случайным номерам в группе k
 			{
-				for (double x :t_data_block[v_random_list_in_group[k][j]])
+				for (double x :t_data_block[v_random_list_in_group[k][j]]) // выбирает пример из блока данных по данному случайному номеру 
 				{
-					v_files_out[k]->operator<<(x);
-					v_files_out[k]->operator<<("\t");
+					*v_files_out[k]<<x;
+					*v_files_out[k]<<"\t";
 				}
-				v_files_out[k]->operator<<("\n");
+				*v_files_out[k]<<"\n";
 			}
-		}
-		for (int k=0;k!=number_of_examples_in_files.size();k++)
-		{
 			v_files_out[k]->clear();
 			v_files_out[k]->close();
 			v_files_in[k]->clear();
 			v_files_in[k]->close();
+			t_data_block.clear();
 		}
+
 	    return false;
 	}
 	else // можно всё сразу поместить в память
 	{
-		data_block=update_data_block(t_dim);
+		std::deque<std::valarray<double > > t_data_block;
+		t_data_block=update_data_block(t_dim);
+		data_block.clear();
+		for (int num_rand : v_random_list)
+		{
+			data_block.push_back(t_data_block[num_rand]);
+		}
 		return true;
 	}
 }
@@ -318,7 +322,9 @@ void Keeper_data_set::clear(const char *name_number_cluster)
 		std::string s_name_file_data_tmp1(name_number_cluster);
 		std::string s_name_file_data_tmp2(name_file_data);
 		std::string s_name_file_data=s_name_file_data_tmp1+"_part_"+str.str()+"_"+s_name_file_data_tmp2;
+		std::string s_name_file_data_random=s_name_file_data_tmp1+"_part_"+str.str()+"_random_"+s_name_file_data_tmp2;
 		remove(s_name_file_data.c_str());
+		remove(s_name_file_data_random.c_str());
 	}
 	data_block.clear(); 
 }
@@ -342,4 +348,31 @@ const char * Keeper_data_set::get_name_file_data() const
 int Keeper_data_set::get_allow_ram_volume() const
 {
 	return allow_ram_volume;
+}
+
+bool Keeper_data_set::get_top_element_data_block(std::valarray<double > &v)
+{
+	if (!data_block.empty())
+	{
+		v=data_block.front();
+		data_block.pop_front();
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
+
+void Keeper_data_set::link_vector_stream_with_files(const char *name_number_cluster)
+{
+	for (int k=0;k!=number_of_examples_in_files.size();k++) //привязка входных-выходных файлов к вектору
+	{
+		std::stringstream str;
+		str<<k+1;
+		std::string s_name_file_data_tmp1(name_number_cluster);
+		std::string s_name_file_data_tmp2(name_file_data);
+		std::string s_name_file_data_in_random=s_name_file_data_tmp1+"_part_"+str.str()+"_random_"+s_name_file_data_tmp2;
+		v_files_in_random.push_back(std::make_shared<ifstream>(s_name_file_data_in_random.c_str()));
+	}
 }

@@ -9,7 +9,7 @@
 #include <assert.h>
 #include "conver.h"
 
-class Keeper_data_set
+class Keeper_data_set // УДАЛИТЬ ВСЕ НЕ используемые функции и переменные
 { 
 public:
 	Keeper_data_set(const char *t_name_file_data, const int t_allow_ram_volume);
@@ -26,13 +26,16 @@ public:
 	//get-interface
 	std::vector<int> get_number_of_examples_in_files() const;
 	std::deque<std::valarray<double > > get_data_block() const;
+	bool get_top_element_data_block(std::valarray<double > &v);
 	const char * get_name_file_data() const;
 	int get_allow_ram_volume() const;
+	void link_vector_stream_with_files(const char *name_number_cluster);
 private:
 	const char *name_file_data;
 	std::ifstream stream_data;
 	int allow_ram_volume; // in Mb
 	std::vector<int> number_of_examples_in_files;
+	std::vector<std::shared_ptr<std::ifstream> > v_files_in_random;
 	std::pair<int,int> get_num_of_file_and_num_of_line(const double t_num_exam); // по номеру примера в большом файле отыскивает маленький файл и номер примера в маленьком файле
 	void get_n_order_vector_in_file(const char *t_name_file_data,std::valarray<double > &v,const int t_num_exam,const int t_dim);
 	std::deque<std::valarray<double > > data_block;
