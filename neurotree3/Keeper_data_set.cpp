@@ -232,7 +232,6 @@ bool Keeper_data_set::prepare_out_in_random_order(const char *name_number_cluste
 			v_files_in[k]->close();
 			t_data_block.clear();
 		}
-
 	    return false;
 	}
 	else // можно всё сразу поместить в память
@@ -255,17 +254,37 @@ bool Keeper_data_set::prepare_out_in_random_order(const char *name_number_cluste
 	return t_data_block;
 }*/
 
-void Keeper_data_set::get_example_in_random_order(const char *name_number_cluster,std::valarray<double > &v, const double t_num_exam,const int t_dim)
+bool Keeper_data_set::get_example_in_random_order(std::valarray<double > &v, int t_num_exam, const int t_dim)
 {
-	std::pair<int,int> pair_tmp=get_num_of_file_and_num_of_line(t_num_exam);
-	int k=pair_tmp.first;
-	double tmp_num_exam_mem=pair_tmp.second;
-	std::stringstream str;
-	str<<k+1;
-	std::string s_name_file_data_tmp1(name_number_cluster);
-	std::string s_name_file_data_tmp2(name_file_data);
-	std::string s_name_file_data=s_name_file_data_tmp1+"_part_"+str.str()+"_"+s_name_file_data_tmp2;
-	get_n_order_vector_in_file(s_name_file_data.c_str(),v,int(tmp_num_exam_mem),t_dim);
+	std::pair<int,int> pair_tmp=get_num_of_file_and_num_of_line(double(t_num_exam));
+	int num_piece=pair_tmp.first;
+	if ((*v_files_in_random[num_piece])) 
+	{
+		bool ok=true;
+		int i=0;
+		double i_tmp;
+		while (((*v_files_in_random[num_piece]))&&(ok))
+		{
+			v_files_in_random[num_piece]->operator>>(i_tmp);
+			v[i]=i_tmp;
+			if (i!=t_dim-1)
+			{
+				i++;
+			}
+			else
+			{
+				ok=false;
+			}
+		}
+		if (!ok)
+		{
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
 }
 
 std::pair<int,int> Keeper_data_set::get_num_of_file_and_num_of_line(const double t_num_exam)
@@ -329,6 +348,12 @@ void Keeper_data_set::clear(const char *name_number_cluster)
 	data_block.clear(); 
 }
 
+void Keeper_data_set::reboot()
+{
+	stream_data.clear();
+	stream_data.close();
+	stream_data.open(name_file_data);
+}
 
 std::vector<int> Keeper_data_set::get_number_of_examples_in_files() const
 {

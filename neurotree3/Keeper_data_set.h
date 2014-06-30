@@ -20,9 +20,10 @@ public:
 	bool get_example_in_order(std::valarray<double > &v, const int dim);
 	void get_example_in_random_order_whole_piece(std::valarray<double > &v, const int num_exam);
 	bool prepare_out_in_random_order(const char *name_number_cluster,std::vector<int> &v_random_list,const int t_dim);//разбивает на файлы в соответсвии с подаваемым порядком, если true - не разбивает и монжно работать в памяти, если false - вне памяти 
-	void get_example_in_random_order(const char *name_number_cluster,std::valarray<double > &v, const double t_num_exam,const int t_dim);
+	bool get_example_in_random_order(std::valarray<double > &v, int t_num_exam,const int t_dim);
 	void split_file_in_pieces(const char *name_number_cluster,const int t_dim);
 	void clear(const char *name_number_cluster);
+	void reboot(); //опять открывает переоткрывает файл
 	//get-interface
 	std::vector<int> get_number_of_examples_in_files() const;
 	std::deque<std::valarray<double > > get_data_block() const;

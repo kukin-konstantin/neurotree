@@ -468,7 +468,7 @@ void Tree::learn_max_number(double (Norm::*f_norm) (const valarray<double>&))
 	}
 }
 
-void Tree::expand_neuron(int first_index,int last_index, int num_calc_node)
+void Tree::expand_neuron(int first_index,int last_index, int num_calc_node) // править 30.06
 {
 	TreeNode * T_tmp;
 	TreeNode * T_tmp_left;
@@ -476,13 +476,19 @@ void Tree::expand_neuron(int first_index,int last_index, int num_calc_node)
 	for (int i = first_index; i < last_index; ++i)
 	{
 		T_tmp=last_layer[i];
-		data_node data(T_tmp->_data.pos_clus,name_file_data,memory_size/(2*num_calc_node)); // деление выделенной памяти на два
-		data.win=false;
-		T_tmp_left = new TreeNode(data);
-		T_tmp_right = new TreeNode(data);
+		const char *t_name_file_data=T_tmp->_data.keep_data.get_name_file_data(); // ошибка на втором круге
+		std::string s_name_file_data(t_name_file_data);
+		s_name_file_data=s_name_file_data.substr(0,s_name_file_data.size()-4); // 4 соответсвует - .txt
+		std::string s_name_file_data_l=s_name_file_data+"_l.txt";
+		std::string s_name_file_data_r=s_name_file_data+"_r.txt";
+		data_node data_l(T_tmp->_data.pos_clus,s_name_file_data_l.c_str(),memory_size/(2*num_calc_node)); // деление выделенной памяти на два
+		data_node data_r(T_tmp->_data.pos_clus,s_name_file_data_r.c_str(),memory_size/(2*num_calc_node)); // деление выделенной памяти на два
+		data_l.win=false;
+		data_r.win=false;
+		T_tmp_left = new TreeNode(data_l);
+		T_tmp_right = new TreeNode(data_r);
 		T_tmp->_left=T_tmp_left;
 		T_tmp->_right=T_tmp_right;
-		//������� �� ������������ �������, ����� ����� ����� ����������� �������������
 	}
 }
 
@@ -508,7 +514,7 @@ void Tree::learn_neuron(Gener &A,double (Norm::*f_norm) (const valarray<double>&
 	TreeNode * T_tmp;
 	int size_train_data;
 	double x;
-	double dob=1.0986;//������������ �������� ������� alpha 0.25
+	double dob=1.0986;//alpha 0.25
 	std::vector<int> v_random_list;
 	for (int i_num_node = first_index; i_num_node < last_index; ++i_num_node)
 	{
@@ -516,9 +522,8 @@ void Tree::learn_neuron(Gener &A,double (Norm::*f_norm) (const valarray<double>&
 		std::string  s_tmp=std::to_string(T_tmp->_data.number_node);
 		const char *name_number_cluster=s_tmp.c_str();
 		T_tmp->_data.keep_data.split_file_in_pieces(name_number_cluster,dim);
-		//size_train_data=T_tmp->_data.train_set.size(); //изменить keep_data_set
 		size_train_data=int(T_tmp->_data.keep_data.get_number_of_examples(dim));
-		for (int j=0;j!=number_iter;j++) // ��������
+		for (int j=0;j!=number_iter;j++) 
 		{
 			x=dob+(j*(log((1.0/accuar)-1.0)-dob))/number_iter;
 			Conver pock(size_train_data);//изменить keep_data_set
@@ -537,7 +542,7 @@ void Tree::learn_neuron(Gener &A,double (Norm::*f_norm) (const valarray<double>&
 				T_tmp->_data.keep_data.link_vector_stream_with_files(name_number_cluster);
 				for (int random_num:v_random_list)
 				{
-					//делать здесь//здесь должна быть выдача случайного вектора из файлов по запросу- его порядковому номеру
+					assert(T_tmp->_data.keep_data.get_example_in_random_order(v_tmp,random_num,dim)==true);//выдача случайного вектора из файлов по запросу- его порядковому номеру
 					learn_one_iteration(T_tmp,f_norm,name_number_cluster,v_tmp,x);
 				}
 			}
@@ -558,8 +563,7 @@ void Tree::learn_one_iteration(TreeNode * T_tmp,double (Norm::*f_norm) (const va
 	double norma_r;
 	pos_clus_left=T_tmp->_left->_data.pos_clus;
 	pos_clus_right=T_tmp->_right->_data.pos_clus;
-	//v_tmp=T_tmp->_data.train_set[i]; // изменить keep_data_set
-	//T_tmp->_data.keep_data.get_example_in_random_order(name_number_cluster,v_tmp,double(i),dim);
+	
 	shift_clus_left=v_tmp-pos_clus_left;
 	shift_clus_right=v_tmp-pos_clus_right;
 	norma_l=(o_norm->*f_norm)(shift_clus_left);
@@ -597,7 +601,7 @@ void Tree::learn_neuron_m_thread(int num_nodes,int num_threads,double (Norm::*f_
 	threads.join_all();
 }
 
-void Tree::del_dead_neuron(double (Norm::*f_norm) (const valarray<double>&),int first_index,int last_index)
+void Tree::del_dead_neuron(double (Norm::*f_norm) (const valarray<double>&),int first_index,int last_index)//правлю 30.06
 {
 	TreeNode * T_tmp;
 	TreeNode * T_tmp_left;
@@ -618,7 +622,7 @@ void Tree::del_dead_neuron(double (Norm::*f_norm) (const valarray<double>&),int 
 		T_tmp_right=T_tmp->_right;
 		pos_clus_left=T_tmp_left->_data.pos_clus;
 		pos_clus_right=T_tmp_right->_data.pos_clus;
-		if (T_tmp_left->_data.win==0)
+		if (T_tmp_left->_data.win==0) // источник возможных ошибок при возникновении мертвых кластеров, проверить на модельной ситуации
 		{
 			T_tmp_left=0;
 			T_tmp->_data.pos_clus=T_tmp->_right->_data.pos_clus;
@@ -626,7 +630,7 @@ void Tree::del_dead_neuron(double (Norm::*f_norm) (const valarray<double>&),int 
 			T_tmp->_right=NULL;
 			tmp_layer_local.push_back(T_tmp);
 		}
-		else if (T_tmp_right->_data.win==0)
+		else if (T_tmp_right->_data.win==0) // источник возможных ошибок при возникновении мертвых кластеров, проверить на модельной ситуации
 		{
 			T_tmp->_right=0;
 			T_tmp->_data.pos_clus=T_tmp->_left->_data.pos_clus;
@@ -636,30 +640,50 @@ void Tree::del_dead_neuron(double (Norm::*f_norm) (const valarray<double>&),int 
 		}
 		else
 		{
-			//int n_max=T_tmp->_data.train_set.size(); // изменить keep_data_set
-			//for (unsigned int i=0;i!=T_tmp->_data.train_set.size();i++)
-			//int i=n_max-1; // изменить keep_data_set
-			/*while (!T_tmp->_data.train_set.empty()) // изменить keep_data_set
+			const char *t_name_data_file=T_tmp->_data.keep_data.get_name_file_data();
+			std::string s_tmp_name_data_file_w_txt(t_name_data_file);
+			std::string s_tmp_name_data_file;
+			s_tmp_name_data_file=s_tmp_name_data_file_w_txt.substr(0,s_tmp_name_data_file_w_txt.size()-4);
+			valarray<double> v_tmp(0.0,dim);
+			std::string s_tmp_name_data_file_l=s_tmp_name_data_file+"_l.txt";
+			std::ofstream t_st_left(s_tmp_name_data_file_l.c_str());
+			std::string s_tmp_name_data_file_r=s_tmp_name_data_file+"_r.txt";
+			std::ofstream t_st_right(s_tmp_name_data_file_r.c_str());
+			T_tmp->_data.keep_data.reboot();
+			while (T_tmp->_data.keep_data.get_example_in_order(v_tmp,dim))//последовательный перебор
 			{
-				v_tmp=T_tmp->_data.train_set[i];
 				shift_clus_left=v_tmp-pos_clus_left;
 				shift_clus_right=v_tmp-pos_clus_right;
 				norma_l=(o_norm->*f_norm)(shift_clus_left);
 				norma_r=(o_norm->*f_norm)(shift_clus_right);
 				if (norma_l<=norma_r)
 				{
-					T_tmp_left->_data.train_set.push_back(v_tmp);
+					for (double x:v_tmp)
+					{
+						t_st_left<<x<<"\t";
+					}
+					t_st_left<<"\n";
+					//T_tmp_left->_data.train_set.push_back(v_tmp); // добавить объект к левому узлу
 				}
 				else
 				{
-					T_tmp_right->_data.train_set.push_back(v_tmp);
+					for (double x:v_tmp)
+					{
+						t_st_right<<x<<"\t";
+					}
+					t_st_right<<"\n";
+					//T_tmp_right->_data.train_set.push_back(v_tmp); // добавить объект к правому узлу
 				}
-				T_tmp->_data.train_set.pop_back();
-				i--;
-			}*/
-			//T_tmp->_data.train_set.clear();
-			tmp_layer_local.push_back(T_tmp_left);
-			tmp_layer_local.push_back(T_tmp_right);
+			}
+			t_st_left.clear();
+			t_st_left.close();
+			t_st_right.clear();
+			t_st_right.close();
+			std::string  s_tmp=std::to_string(T_tmp->_data.number_node);
+		    const char *name_number_cluster=s_tmp.c_str();
+			T_tmp->_data.keep_data.clear(name_number_cluster); //T_tmp->_data.train_set.clear();
+			tmp_layer_local.push_back(T_tmp_left);// здесь должно быть оформление keep_data_set
+			tmp_layer_local.push_back(T_tmp_right);// здесь должно быть оформление keep_data_set
 		}
 	}
 	boost::mutex::scoped_lock lock(layer_push_mutex);
