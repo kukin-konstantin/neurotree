@@ -23,7 +23,7 @@ public:
 	bool get_example_in_random_order(std::valarray<double > &v, int t_num_exam,const int t_dim);
 	void split_file_in_pieces(const char *name_number_cluster,const int t_dim);
 	void clear(const char *name_number_cluster);
-	void reboot(); //опять открывает переоткрывает файл
+	void re_open_stream();
 	//get-interface
 	std::vector<int> get_number_of_examples_in_files() const;
 	std::deque<std::valarray<double > > get_data_block() const;
@@ -32,7 +32,8 @@ public:
 	int get_allow_ram_volume() const;
 	void link_vector_stream_with_files(const char *name_number_cluster);
 private:
-	const char *name_file_data;
+	//const char *name_file_data; // заменить на string
+	std::string s_name_file_data;
 	std::ifstream stream_data;
 	int allow_ram_volume; // in Mb
 	std::vector<int> number_of_examples_in_files;

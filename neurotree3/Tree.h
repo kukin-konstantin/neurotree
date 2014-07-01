@@ -468,7 +468,7 @@ void Tree::learn_max_number(double (Norm::*f_norm) (const valarray<double>&))
 	}
 }
 
-void Tree::expand_neuron(int first_index,int last_index, int num_calc_node) // править 30.06
+void Tree::expand_neuron(int first_index,int last_index, int num_calc_node) 
 {
 	TreeNode * T_tmp;
 	TreeNode * T_tmp_left;
@@ -476,7 +476,7 @@ void Tree::expand_neuron(int first_index,int last_index, int num_calc_node) // �
 	for (int i = first_index; i < last_index; ++i)
 	{
 		T_tmp=last_layer[i];
-		const char *t_name_file_data=T_tmp->_data.keep_data.get_name_file_data(); // ошибка на втором круге
+		const char *t_name_file_data=T_tmp->_data.keep_data.get_name_file_data(); 
 		std::string s_name_file_data(t_name_file_data);
 		s_name_file_data=s_name_file_data.substr(0,s_name_file_data.size()-4); // 4 соответсвует - .txt
 		std::string s_name_file_data_l=s_name_file_data+"_l.txt";
@@ -488,7 +488,9 @@ void Tree::expand_neuron(int first_index,int last_index, int num_calc_node) // �
 		T_tmp_left = new TreeNode(data_l);
 		T_tmp_right = new TreeNode(data_r);
 		T_tmp->_left=T_tmp_left;
+		T_tmp->_left->_data.keep_data.re_open_stream();
 		T_tmp->_right=T_tmp_right;
+		T_tmp->_right->_data.keep_data.re_open_stream();
 	}
 }
 
@@ -516,7 +518,7 @@ void Tree::learn_neuron(Gener &A,double (Norm::*f_norm) (const valarray<double>&
 	double x;
 	double dob=1.0986;//alpha 0.25
 	std::vector<int> v_random_list;
-	for (int i_num_node = first_index; i_num_node < last_index; ++i_num_node)
+	for (int i_num_node = first_index; i_num_node < last_index; ++i_num_node) // ошибка возникает в этом цикле
 	{
 		T_tmp=last_layer[i_num_node];
 		std::string  s_tmp=std::to_string(T_tmp->_data.number_node);
@@ -527,8 +529,8 @@ void Tree::learn_neuron(Gener &A,double (Norm::*f_norm) (const valarray<double>&
 		{
 			x=dob+(j*(log((1.0/accuar)-1.0)-dob))/number_iter;
 			Conver pock(size_train_data);//изменить keep_data_set
-			get_random_list(v_random_list,A,pock);
-			if (T_tmp->_data.keep_data.prepare_out_in_random_order(name_number_cluster,v_random_list,dim)) // можно поместить в память
+			get_random_list(v_random_list,A,pock);  // ошибка возникает в случае, когда не влезает в память объект
+			if (T_tmp->_data.keep_data.prepare_out_in_random_order(name_number_cluster,v_random_list,dim))//ошибка здесь // можно поместить в память
 			{
 				valarray<double> v_tmp(0.0,dim);
 				while (T_tmp->_data.keep_data.get_top_element_data_block(v_tmp))
@@ -617,7 +619,7 @@ void Tree::del_dead_neuron(double (Norm::*f_norm) (const valarray<double>&),int 
 	vector<TreeNode *> tmp_layer_local;
 	for (int i_num_node = first_index; i_num_node < last_index; ++i_num_node)
 	{
-		T_tmp=last_layer[i_num_node];
+		T_tmp=last_layer[i_num_node]; // здесь теряется информация
 		T_tmp_left=T_tmp->_left;
 		T_tmp_right=T_tmp->_right;
 		pos_clus_left=T_tmp_left->_data.pos_clus;
@@ -649,7 +651,7 @@ void Tree::del_dead_neuron(double (Norm::*f_norm) (const valarray<double>&),int 
 			std::ofstream t_st_left(s_tmp_name_data_file_l.c_str());
 			std::string s_tmp_name_data_file_r=s_tmp_name_data_file+"_r.txt";
 			std::ofstream t_st_right(s_tmp_name_data_file_r.c_str());
-			T_tmp->_data.keep_data.reboot();
+			T_tmp->_data.keep_data.re_open_stream();
 			while (T_tmp->_data.keep_data.get_example_in_order(v_tmp,dim))//последовательный перебор
 			{
 				shift_clus_left=v_tmp-pos_clus_left;
@@ -1028,6 +1030,7 @@ void Tree::error()
 void Tree::get_random_list(std::vector<int> &v_random_list,Gener &A,Conver &pock)
 {
 	int i;
+	v_random_list.clear();
 	while (!pock.empty())
 	{
 		i=pock.get_num(A);

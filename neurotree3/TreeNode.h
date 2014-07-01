@@ -51,6 +51,15 @@ struct data_node // ������ ������������ � 
 		number_node=data.number_node;
 		number_node_vec=data.number_node_vec;
 	}
+	data_node & operator=(const data_node& t)
+	{
+		pos_clus=t.pos_clus;
+		win=t.win;
+		number_node=t.number_node;
+		number_node_vec=t.number_node_vec;
+		keep_data=t.keep_data;
+		return *this;
+	}
 	void set_keep_data(Keeper_data_set &t_keep_data)
 	{
 	   keep_data=t_keep_data;
@@ -68,7 +77,7 @@ class TreeNode
 public:
     //TreeNode(); // ����������� �� ���������
     TreeNode(data_node &); // ����������� ������������
- 
+	TreeNode &operator=(const TreeNode& t);
     data_node get_data() const; // ������ ������ ����������� ����
 	//void copy_data_set(std::deque<valarray<double > > &t_train_set); //old_version need to remove
 private:
@@ -86,7 +95,14 @@ _right(0)
 {
 
 }
- 
+
+TreeNode & TreeNode::operator=(const TreeNode& t)
+{
+	_data=t._data; // правильно используется? data_node operator= не надо писать?
+	_left=t._left;
+	_right=t._right;
+	return *this;
+}
 
 data_node TreeNode::get_data() const
 {

@@ -2,32 +2,40 @@
 
 
 Keeper_data_set::Keeper_data_set(const char *t_name_file_data,const int t_allow_ram_volume):
-name_file_data(t_name_file_data),allow_ram_volume(t_allow_ram_volume)
+s_name_file_data(t_name_file_data),allow_ram_volume(t_allow_ram_volume)
 {
 	assert(allow_ram_volume>0); // если выдел€ема€ пам€ть меньше нул€, то прекратить выполнение программы
 	stream_data.open(t_name_file_data);
 }
 
 Keeper_data_set::Keeper_data_set(const Keeper_data_set &t):
-name_file_data(t.name_file_data),allow_ram_volume(t.allow_ram_volume)
+s_name_file_data(t.s_name_file_data),allow_ram_volume(t.allow_ram_volume)
 {
-	stream_data.clear();
+	/*stream_data.clear();
 	stream_data.close();
-	stream_data.open(name_file_data);
+	stream_data.open(name_file_data);*/
+	re_open_stream();
 	number_of_examples_in_files=t.get_number_of_examples_in_files();
 	data_block=t.get_data_block();
 }
 
 Keeper_data_set & Keeper_data_set::operator=(const Keeper_data_set& t)
 {
-	name_file_data=t.get_name_file_data();
+	s_name_file_data=t.get_name_file_data();
 	allow_ram_volume=t.get_allow_ram_volume();
-	stream_data.clear();
-	stream_data.close();
-	stream_data.open(name_file_data);
+	//stream_data.clear();// не работает,  это должно запускатьс€ в другом классе
+	//stream_data.close();//
+	//stream_data.open(name_file_data);// 
 	number_of_examples_in_files=t.get_number_of_examples_in_files();
 	data_block=t.get_data_block();
 	return *this;
+}
+
+void Keeper_data_set::re_open_stream()
+{
+	stream_data.clear();
+	stream_data.close();
+	stream_data.open(s_name_file_data.c_str()); 
 }
 
 Keeper_data_set::~Keeper_data_set()
@@ -40,7 +48,7 @@ double Keeper_data_set::get_number_of_examples(const int t_dim)
 {
 	double d_number_of_examples=0;
 	std::ifstream stream_data_tmp;
-	stream_data_tmp.open(name_file_data);
+	stream_data_tmp.open(s_name_file_data.c_str());
 	int i=0;
 	double i_tmp;
 	while (stream_data_tmp)
@@ -131,9 +139,9 @@ void  Keeper_data_set::split_file_in_pieces(const char *name_number_cluster,cons
 		sh_part_of_files++;
 		str<<sh_part_of_files;
 		std::string s_name_file_data_tmp1(name_number_cluster);
-		std::string s_name_file_data_tmp2(name_file_data);
-		std::string s_name_file_data=s_name_file_data_tmp1+"_part_"+str.str()+"_"+s_name_file_data_tmp2;
-		std::ofstream t_file_out(s_name_file_data.c_str());
+		std::string s_name_file_data_tmp2(s_name_file_data.c_str());
+		std::string s_name_file_data_t=s_name_file_data_tmp1+"_part_"+str.str()+"_"+s_name_file_data_tmp2;
+		std::ofstream t_file_out(s_name_file_data_t.c_str());
 		while ((stream_data)&&(t_number_of_example!=0))
 		{
 			bool ok=true;
@@ -186,7 +194,7 @@ bool Keeper_data_set::prepare_out_in_random_order(const char *name_number_cluste
 			std::stringstream str;
 			str<<k+1;
 			std::string s_name_file_data_tmp1(name_number_cluster);
-			std::string s_name_file_data_tmp2(name_file_data);
+			std::string s_name_file_data_tmp2(s_name_file_data.c_str());
 			std::string s_name_file_data_out=s_name_file_data_tmp1+"_part_"+str.str()+"_random_"+s_name_file_data_tmp2;
 			std::string s_name_file_data_in=s_name_file_data_tmp1+"_part_"+str.str()+"_"+s_name_file_data_tmp2;
 			v_files_out.push_back(std::make_shared<ofstream>(s_name_file_data_out.c_str()));
@@ -237,6 +245,10 @@ bool Keeper_data_set::prepare_out_in_random_order(const char *name_number_cluste
 	else // можно всЄ сразу поместить в пам€ть
 	{
 		std::deque<std::valarray<double > > t_data_block;
+		/*stream_data.clear();
+		stream_data.close();
+		stream_data.open(name_file_data);*/
+		re_open_stream();
 		t_data_block=update_data_block(t_dim);
 		data_block.clear();
 		for (int num_rand : v_random_list)
@@ -255,6 +267,7 @@ bool Keeper_data_set::prepare_out_in_random_order(const char *name_number_cluste
 }*/
 
 bool Keeper_data_set::get_example_in_random_order(std::valarray<double > &v, int t_num_exam, const int t_dim)
+/*ћожно оптимизировать не бер€ по одному примеру из файла, а подкачива€ их из блоков пам€ти, уже заполненных*/
 {
 	std::pair<int,int> pair_tmp=get_num_of_file_and_num_of_line(double(t_num_exam));
 	int num_piece=pair_tmp.first;
@@ -339,20 +352,13 @@ void Keeper_data_set::clear(const char *name_number_cluster)
 		std::stringstream str;
 		str<<k+1;
 		std::string s_name_file_data_tmp1(name_number_cluster);
-		std::string s_name_file_data_tmp2(name_file_data);
+		std::string s_name_file_data_tmp2(s_name_file_data.c_str());
 		std::string s_name_file_data=s_name_file_data_tmp1+"_part_"+str.str()+"_"+s_name_file_data_tmp2;
 		std::string s_name_file_data_random=s_name_file_data_tmp1+"_part_"+str.str()+"_random_"+s_name_file_data_tmp2;
 		remove(s_name_file_data.c_str());
 		remove(s_name_file_data_random.c_str());
 	}
 	data_block.clear(); 
-}
-
-void Keeper_data_set::reboot()
-{
-	stream_data.clear();
-	stream_data.close();
-	stream_data.open(name_file_data);
 }
 
 std::vector<int> Keeper_data_set::get_number_of_examples_in_files() const
@@ -367,7 +373,7 @@ std::deque<std::valarray<double > >  Keeper_data_set::get_data_block() const
 
 const char * Keeper_data_set::get_name_file_data() const
 {
-	return name_file_data;
+	return s_name_file_data.c_str();
 }
 
 int Keeper_data_set::get_allow_ram_volume() const
@@ -396,7 +402,7 @@ void Keeper_data_set::link_vector_stream_with_files(const char *name_number_clus
 		std::stringstream str;
 		str<<k+1;
 		std::string s_name_file_data_tmp1(name_number_cluster);
-		std::string s_name_file_data_tmp2(name_file_data);
+		std::string s_name_file_data_tmp2(s_name_file_data.c_str());
 		std::string s_name_file_data_in_random=s_name_file_data_tmp1+"_part_"+str.str()+"_random_"+s_name_file_data_tmp2;
 		v_files_in_random.push_back(std::make_shared<ifstream>(s_name_file_data_in_random.c_str()));
 	}
