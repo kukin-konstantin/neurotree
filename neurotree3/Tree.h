@@ -518,19 +518,19 @@ void Tree::learn_neuron(Gener &A,double (Norm::*f_norm) (const valarray<double>&
 	double x;
 	double dob=1.0986;//alpha 0.25
 	std::vector<int> v_random_list;
-	for (int i_num_node = first_index; i_num_node < last_index; ++i_num_node) // ошибка возникает в этом цикле
+	for (int i_num_node = first_index; i_num_node < last_index; ++i_num_node) 
 	{
 		T_tmp=last_layer[i_num_node];
 		std::string  s_tmp=std::to_string(T_tmp->_data.number_node);
 		const char *name_number_cluster=s_tmp.c_str();
-		T_tmp->_data.keep_data.split_file_in_pieces(name_number_cluster,dim);
+		T_tmp->_data.keep_data.split_file_in_pieces(name_number_cluster,dim); // здесь ошибка 02/07, почему не поделил и не создал файлов?
 		size_train_data=int(T_tmp->_data.keep_data.get_number_of_examples(dim));
 		for (int j=0;j!=number_iter;j++) 
 		{
 			x=dob+(j*(log((1.0/accuar)-1.0)-dob))/number_iter;
 			Conver pock(size_train_data);//изменить keep_data_set
-			get_random_list(v_random_list,A,pock);  // ошибка возникает в случае, когда не влезает в память объект
-			if (T_tmp->_data.keep_data.prepare_out_in_random_order(name_number_cluster,v_random_list,dim))//ошибка здесь // можно поместить в память
+			get_random_list(v_random_list,A,pock);  
+			if (T_tmp->_data.keep_data.prepare_out_in_random_order(name_number_cluster,v_random_list,dim))
 			{
 				valarray<double> v_tmp(0.0,dim);
 				while (T_tmp->_data.keep_data.get_top_element_data_block(v_tmp))

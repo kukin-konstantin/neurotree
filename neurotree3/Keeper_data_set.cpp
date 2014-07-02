@@ -356,7 +356,7 @@ void Keeper_data_set::clear(const char *name_number_cluster)
 		std::string s_name_file_data=s_name_file_data_tmp1+"_part_"+str.str()+"_"+s_name_file_data_tmp2;
 		std::string s_name_file_data_random=s_name_file_data_tmp1+"_part_"+str.str()+"_random_"+s_name_file_data_tmp2;
 		remove(s_name_file_data.c_str());
-		remove(s_name_file_data_random.c_str());
+		remove(s_name_file_data_random.c_str()); //не происхоидит удаления файла, ошибка в имени?
 	}
 	data_block.clear(); 
 }
