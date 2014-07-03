@@ -6,6 +6,7 @@
 #include <vector>
 #include <deque>
 #include <valarray>
+#include <memory>
 #include <assert.h>
 #include "conver.h"
 

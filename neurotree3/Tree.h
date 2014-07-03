@@ -40,9 +40,9 @@ class Tree
 {
 public:
     Tree(const char *t_name_file_data,int t_dim,double t_accuar,int t_max_number_cluster,c_name_norma t_norm,int t_number_iter,bool t_numberORaccuar,int t_number_proc, int t_memory_size);//конструктор для обучения
-    Tree(const char *t_name_file_tree); //конструктор для тестирования
+    Tree(const char *t_name_file_data,const char *t_name_file_tree,int t_memory_size); //конструктор для тестирования
 	void learn(); // �������� ������
-	void test(const char *t_name_file_data,const char *t_name_file_clusters,const char *t_name_file_result);
+	void test(const char *t_name_file_clusters,const char *t_name_file_result);
 	void print_in_tree_file(const char *t_name_file_tree);
 	//void copy_data_set(std::deque<valarray<double > > &t_train_set,data_node &data); // old version need to remove
 	void copy_data_set(Keeper_data_set &keep,data_node &data);
@@ -127,8 +127,8 @@ _root(0),name_file_data(t_name_file_data),accuar(t_accuar),max_number_cluster(t_
 	last_number_clusters=0;
 }
  
-Tree::Tree(const char *t_name_file_tree):
-_root(0)
+Tree::Tree(const char *t_name_file_data,const char *t_name_file_tree,int t_memory_size):
+_root(0),name_file_data(t_name_file_data),memory_size(t_memory_size)
 {
 	int t_dim;
 	string s;
@@ -159,10 +159,12 @@ _root(0)
 		valarray<double> v_pos_root(0.0,dim);
 		if (read_vec(data_tree,v_pos_root))
 		{
+			Keeper_data_set keep(name_file_data,t_memory_size);
+			size_data=keep.get_number_of_examples(dim);
 			data_node data(v_pos_root,name_file_data,memory_size); //change check
+			copy_data_set(keep,data);
 			data.win=false;
 			_root = new TreeNode(data);
-			//copy_data_set(data.train_set,_root->_data); // old version need to remove
 			data_tree>>s;
 			if (s=="Left")
 			{
@@ -265,10 +267,9 @@ void Tree::learn()
 }
 
 
-void Tree::test(const char *t_name_file_data,const char *t_name_file_clusters,const char *t_name_file_result)
+void Tree::test(const char *t_name_file_clusters,const char *t_name_file_result)
 {
-	name_file_data=t_name_file_data;
-    deque<valarray<double > > t_test_set=read_data_to_memory(); // исключить keep_data_set
+    //deque<valarray<double > > t_test_set=read_data_to_memory(); // исключить keep_data_set
 	double (Norm::*f_norm) (const valarray<double>&) =0;
 	if (norm==Evkl)
 	{
@@ -298,9 +299,11 @@ void Tree::test(const char *t_name_file_data,const char *t_name_file_clusters,co
 	valarray<double> v_tmp(0.0,dim);
 	ofstream data_result(t_name_file_result);
 	cout<<"result clustering"<<"\n";//add
-	for (unsigned int i=0;i!=t_test_set.size();i++) // заменить цикл на keep_data_set
+	//for (unsigned int i=0;i!=t_test_set.size();i++) // заменить цикл на keep_data_set
+	
+	while (_root->_data.keep_data.get_example_in_order(v_tmp,dim))
 	{
-		v_tmp=t_test_set[i];
+		//v_tmp=t_test_set[i];
 		/*data_result<<get_near_cluster(v_tmp,f_norm)<<"\n";* old*/
 		/*new console*/
 		int i_tmp=get_near_cluster(v_tmp,f_norm);

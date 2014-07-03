@@ -79,8 +79,8 @@ int main()
                     const char *name_file_result=s_name_file_result.c_str();
                     if ((sett.exist_file(name_file_in))&&(sett.exist_file(name_file_tree)))
                     {
-                            Tree der(name_file_tree);
-                            der.test(name_file_in,name_file_cluster,name_file_result);
+                            Tree der(name_file_in,name_file_tree,sett.get_memory_size());
+                            der.test(name_file_cluster,name_file_result);
                     }
                     else
                     {
