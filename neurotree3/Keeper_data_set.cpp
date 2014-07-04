@@ -225,8 +225,13 @@ bool Keeper_data_set::prepare_out_in_random_order(const char *name_number_cluste
 				if (!ok)
 					t_data_block.push_back(v_tmp);
 			}
+			std::cout<<"v_random_list_in_group.size()="<<v_random_list_in_group.size()<<"\n";
+			std::cout<<"k="<<k<<"\n";
+			std::cout<<"v_random_list_in_group[k].size()="<<v_random_list_in_group[k].size()<<"\n";
+			std::cout<<"t_data_block.size()="<<t_data_block.size()<<"\n";
 			for (int j=0;j!=v_random_list_in_group[k].size();j++)// цикл по случайным номерам в группе k
 			{
+				std::cout<<"!*"<<v_random_list_in_group[k][j]<<"\t";
 				for (double x :t_data_block[v_random_list_in_group[k][j]]) // выбирает пример из блока данных по данному случайному номеру 
 				{
 					*v_files_out[k]<<x;
@@ -397,6 +402,7 @@ bool Keeper_data_set::get_top_element_data_block(std::valarray<double > &v)
 
 void Keeper_data_set::link_vector_stream_with_files(const char *name_number_cluster)
 {
+	v_files_in_random.clear();
 	for (int k=0;k!=number_of_examples_in_files.size();k++) //прив€зка входных-выходных файлов к вектору
 	{
 		std::stringstream str;
