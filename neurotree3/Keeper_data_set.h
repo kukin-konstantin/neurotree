@@ -32,6 +32,8 @@ public:
 	const char * get_name_file_data() const;
 	int get_allow_ram_volume() const;
 	void link_vector_stream_with_files(const char *name_number_cluster);
+	void reboot_vector_stream_with_files(const char *name_number_cluster);
+	void clear_vector_stream_with_files(const char *name_number_cluster);
 private:
 	//const char *name_file_data; // заменить на string
 	std::string s_name_file_data;

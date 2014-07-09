@@ -231,7 +231,7 @@ bool Keeper_data_set::prepare_out_in_random_order(const char *name_number_cluste
 			std::cout<<"t_data_block.size()="<<t_data_block.size()<<"\n";
 			for (int j=0;j!=v_random_list_in_group[k].size();j++)// цикл по случайным номерам в группе k
 			{
-				std::cout<<"!*"<<v_random_list_in_group[k][j]<<"\t";
+				//std::cout<<"!*"<<v_random_list_in_group[k][j]<<"\t";
 				for (double x :t_data_block[v_random_list_in_group[k][j]]) // выбирает пример из блока данных по данному случайному номеру 
 				{
 					*v_files_out[k]<<x;
@@ -411,5 +411,27 @@ void Keeper_data_set::link_vector_stream_with_files(const char *name_number_clus
 		std::string s_name_file_data_tmp2(s_name_file_data.c_str());
 		std::string s_name_file_data_in_random=s_name_file_data_tmp1+"_part_"+str.str()+"_random_"+s_name_file_data_tmp2;
 		v_files_in_random.push_back(std::make_shared<ifstream>(s_name_file_data_in_random.c_str()));
+	}
+}
+
+void Keeper_data_set::reboot_vector_stream_with_files(const char *name_number_cluster)
+{
+	for (int k=0;k!=number_of_examples_in_files.size();k++) 
+	{
+		std::stringstream str;
+		str<<k+1;
+		std::string s_name_file_data_tmp1(name_number_cluster);
+		std::string s_name_file_data_tmp2(s_name_file_data.c_str());
+		std::string s_name_file_data_in_random=s_name_file_data_tmp1+"_part_"+str.str()+"_random_"+s_name_file_data_tmp2;
+		v_files_in_random[k]->open(s_name_file_data_in_random.c_str());
+	}
+}
+
+void Keeper_data_set::clear_vector_stream_with_files(const char *name_number_cluster)
+{
+	for (int k=0;k!=number_of_examples_in_files.size();k++) 
+	{
+		v_files_in_random[k]->clear();
+		v_files_in_random[k]->close();
 	}
 }

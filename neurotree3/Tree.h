@@ -526,8 +526,9 @@ void Tree::learn_neuron(Gener &A,double (Norm::*f_norm) (const valarray<double>&
 		T_tmp=last_layer[i_num_node];
 		std::string  s_tmp=std::to_string(T_tmp->_data.number_node);
 		const char *name_number_cluster=s_tmp.c_str();
-		T_tmp->_data.keep_data.split_file_in_pieces(name_number_cluster,dim); // здесь ошибка 02/07, почему не поделил и не создал файлов?
+		T_tmp->_data.keep_data.split_file_in_pieces(name_number_cluster,dim); 
 		size_train_data=int(T_tmp->_data.keep_data.get_number_of_examples(dim));
+		bool b_first_det_stream_d=true;
 		for (int j=0;j!=number_iter;j++) 
 		{
 			x=dob+(j*(log((1.0/accuar)-1.0)-dob))/number_iter;
@@ -535,6 +536,7 @@ void Tree::learn_neuron(Gener &A,double (Norm::*f_norm) (const valarray<double>&
 			get_random_list(v_random_list,A,pock);  
 			if (T_tmp->_data.keep_data.prepare_out_in_random_order(name_number_cluster,v_random_list,dim))
 			{
+				std::cout<<"prepare_out finish NO DIVIDE!"<<"\n";
 				valarray<double> v_tmp(0.0,dim);
 				while (T_tmp->_data.keep_data.get_top_element_data_block(v_tmp))
 				{
@@ -543,13 +545,26 @@ void Tree::learn_neuron(Gener &A,double (Norm::*f_norm) (const valarray<double>&
 			}
 			else // нельзя поместить в память
 			{
+				std::cout<<"prepare_out finish, DIVIDE!"<<"\n";
 				valarray<double> v_tmp(0.0,dim);
-				T_tmp->_data.keep_data.link_vector_stream_with_files(name_number_cluster);
+				if (b_first_det_stream_d)
+				{
+					T_tmp->_data.keep_data.link_vector_stream_with_files(name_number_cluster); 
+					b_first_det_stream_d=false;
+				}
+				else
+				{
+					T_tmp->_data.keep_data.reboot_vector_stream_with_files(name_number_cluster);
+				}
+				std::cout<<"part1"<<"\n";
 				for (int random_num:v_random_list)
 				{
 					assert(T_tmp->_data.keep_data.get_example_in_random_order(v_tmp,random_num,dim)==true);//выдача случайного вектора из файлов по запросу- его порядковому номеру
 					learn_one_iteration(T_tmp,f_norm,name_number_cluster,v_tmp,x);
 				}
+				std::cout<<"part2"<<"\n";
+				T_tmp->_data.keep_data.clear_vector_stream_with_files(name_number_cluster);
+				std::cout<<"part3"<<"\n";
 			}
 		}
 		T_tmp->_data.keep_data.clear(name_number_cluster);
