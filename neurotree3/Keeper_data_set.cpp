@@ -1,41 +1,23 @@
 #include "Keeper_data_set.h"
 
-
+/*Keeper_data_set*/
 Keeper_data_set::Keeper_data_set(const char *t_name_file_data,const int t_allow_ram_volume):
 s_name_file_data(t_name_file_data),allow_ram_volume(t_allow_ram_volume)
 {
 	assert(allow_ram_volume>0); // если выдел€ема€ пам€ть меньше нул€, то прекратить выполнение программы
-	stream_data.open(t_name_file_data);
 }
 
 Keeper_data_set::Keeper_data_set(const Keeper_data_set &t):
 s_name_file_data(t.s_name_file_data),allow_ram_volume(t.allow_ram_volume)
 {
-	/*stream_data.clear();
-	stream_data.close();
-	stream_data.open(name_file_data);*/
-	re_open_stream();
-	number_of_examples_in_files=t.get_number_of_examples_in_files();
-	data_block=t.get_data_block();
+	
 }
 
 Keeper_data_set & Keeper_data_set::operator=(const Keeper_data_set& t)
 {
 	s_name_file_data=t.get_name_file_data();
-	allow_ram_volume=t.get_allow_ram_volume();
-	//stream_data.clear();// не работает,  это должно запускатьс€ в другом классе
-	//stream_data.close();//
-	//stream_data.open(name_file_data);// 
-	number_of_examples_in_files=t.get_number_of_examples_in_files();
-	data_block=t.get_data_block();
+	allow_ram_volume=t.get_allow_ram_volume(); 
 	return *this;
-}
-
-void Keeper_data_set::re_open_stream()
-{
-	stream_data.clear();
-	stream_data.close();
-	stream_data.open(s_name_file_data.c_str()); 
 }
 
 Keeper_data_set::~Keeper_data_set()
@@ -44,7 +26,67 @@ Keeper_data_set::~Keeper_data_set()
 	stream_data.close();
 }
 
-double Keeper_data_set::get_number_of_examples(const int t_dim)
+const char * Keeper_data_set::get_name_file_data() const
+{
+	return s_name_file_data.c_str();
+}
+
+int Keeper_data_set::get_allow_ram_volume() const
+{
+	return allow_ram_volume;
+}
+
+bool Keeper_data_set::get_top_element_data_block(std::valarray<double > &v)
+{
+	if (!data_block.empty())
+	{
+		v=data_block.front();
+		data_block.pop_front();
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
+
+/*Keeper_data_set*/
+/*Keeper_data_set_text*/
+Keeper_data_set_text::Keeper_data_set_text(const char *t_name_file_data,const int t_allow_ram_volume):
+	Keeper_data_set(t_name_file_data,t_allow_ram_volume)
+{
+	stream_data.open(t_name_file_data);
+}
+
+Keeper_data_set_text::Keeper_data_set_text(const Keeper_data_set_text &t):
+Keeper_data_set(t)
+{
+	re_open_stream();
+	number_of_examples_in_files=t.get_number_of_examples_in_files();
+	data_block=t.get_data_block();
+}
+
+Keeper_data_set_text & Keeper_data_set_text::operator=(const Keeper_data_set_text& t)
+{
+	Keeper_data_set::operator=(t);
+	number_of_examples_in_files=t.get_number_of_examples_in_files();
+	data_block=t.get_data_block();
+	return *this;
+}
+
+Keeper_data_set_text::~Keeper_data_set_text()
+{
+	
+}
+
+void Keeper_data_set_text::re_open_stream()
+{
+	stream_data.clear();
+	stream_data.close();
+	stream_data.open(s_name_file_data.c_str()); 
+}
+
+double Keeper_data_set_text::get_number_of_examples(const int t_dim)
 {
 	double d_number_of_examples=0;
 	std::ifstream stream_data_tmp;
@@ -69,7 +111,7 @@ double Keeper_data_set::get_number_of_examples(const int t_dim)
 	return d_number_of_examples;
 }
 
-bool Keeper_data_set::get_example_in_order(std::valarray<double > &v, const int t_dim)
+bool Keeper_data_set_text::get_example_in_order(std::valarray<double > &v, const int t_dim)
 {
 	if (!data_block.empty())
 	{
@@ -90,17 +132,18 @@ bool Keeper_data_set::get_example_in_order(std::valarray<double > &v, const int 
 	}
 }
 
-void Keeper_data_set::get_example_in_random_order_whole_piece(std::valarray<double > &v, const int num_exam)
+void Keeper_data_set_text::get_example_in_random_order_whole_piece(std::valarray<double > &v, const int num_exam)
 {
 	v=data_block[num_exam];
 }
 
-std::deque<std::valarray<double > > Keeper_data_set::update_data_block(const int t_dim)
+std::deque<std::valarray<double > > Keeper_data_set_text::update_data_block(const int t_dim)
 {
 	std::deque<std::valarray<double > > t_data_block;
 	std::valarray<double > v_tmp(0.0,t_dim);
 	const int mb_in_byte=1048576; // 1 mb = 1 048 575 bytes
-	int number_of_example=(mb_in_byte*allow_ram_volume)/(t_dim*sizeof(double));
+	int number_of_example=allow_ram_volume*((mb_in_byte)/(t_dim*sizeof(double)));
+	std::cout<<"number_of_example="<<number_of_example<<"\n";
 	while ((stream_data)&&(number_of_example!=0))
 	{
 		bool ok=true;
@@ -123,14 +166,15 @@ std::deque<std::valarray<double > > Keeper_data_set::update_data_block(const int
 			t_data_block.push_back(v_tmp);
 		number_of_example--;
 	}
+	std::cout<<"the end update_data_block"<<"\n";
 	return t_data_block;
 }
 
-void  Keeper_data_set::split_file_in_pieces(const char *name_number_cluster,const int t_dim)
+void  Keeper_data_set_text::split_file_in_pieces(const char *name_number_cluster,const int t_dim)
 {
 	std::valarray<double > v_tmp(0.0,t_dim);
 	const int mb_in_byte=1048576; // 1 mb = 1 048 576 bytes
-	const int number_of_example=(mb_in_byte*allow_ram_volume)/(t_dim*sizeof(double));
+	const int number_of_example=allow_ram_volume*((mb_in_byte)/(t_dim*sizeof(double)));
 	int sh_part_of_files=0;
 	while (stream_data)
 	{
@@ -176,7 +220,7 @@ void  Keeper_data_set::split_file_in_pieces(const char *name_number_cluster,cons
 	}
 }
 
-bool Keeper_data_set::prepare_out_in_random_order(const char *name_number_cluster,std::vector<int> &v_random_list,const int t_dim) //to big for function
+bool Keeper_data_set_text::prepare_out_in_random_order(const char *name_number_cluster,std::vector<int> &v_random_list,const int t_dim) //to big for function
 {
 	if (number_of_examples_in_files.size()!=1) // 1 - количество кусков разбиени€, нельз€ всЄ поместить в пам€ть
 	{
@@ -264,14 +308,8 @@ bool Keeper_data_set::prepare_out_in_random_order(const char *name_number_cluste
 	}
 }
 
-/*std::deque<std::valarray<double > > Keeper_data_set::get_examples_from_file(std::string t_name_file,const int t_dim)
-{
-	std::deque<std::valarray<double > > t_data_block;
-	Keeper_data_set t(t_name_file.c_str(),this->allow_ram_volume);
-	return t_data_block;
-}*/
 
-bool Keeper_data_set::get_example_in_random_order(std::valarray<double > &v, int t_num_exam, const int t_dim)
+bool Keeper_data_set_text::get_example_in_random_order(std::valarray<double > &v, int t_num_exam, const int t_dim)
 /*ћожно оптимизировать не бер€ по одному примеру из файла, а подкачива€ их из блоков пам€ти, уже заполненных*/
 {
 	std::pair<int,int> pair_tmp=get_num_of_file_and_num_of_line(double(t_num_exam));
@@ -305,7 +343,7 @@ bool Keeper_data_set::get_example_in_random_order(std::valarray<double > &v, int
 	}
 }
 
-std::pair<int,int> Keeper_data_set::get_num_of_file_and_num_of_line(const double t_num_exam)
+std::pair<int,int> Keeper_data_set_text::get_num_of_file_and_num_of_line(const double t_num_exam)
 {
 	int k=0;
 	bool usl=true;
@@ -328,7 +366,7 @@ std::pair<int,int> Keeper_data_set::get_num_of_file_and_num_of_line(const double
 	return tmp_pair;
 }
 
-void Keeper_data_set::get_n_order_vector_in_file(const char *t_name_file_data,std::valarray<double > &v,const int t_num_exam,const int t_dim)
+/*void Keeper_data_set::get_n_order_vector_in_file(const char *t_name_file_data,std::valarray<double > &v,const int t_num_exam,const int t_dim)
 {
 	std::ifstream t_stream_data;
 	std::string s;
@@ -347,9 +385,9 @@ void Keeper_data_set::get_n_order_vector_in_file(const char *t_name_file_data,st
 	t_stream_data.clear();
 	t_stream_data.close();
 	v=v_tmp;
-}
+}*/
 
-void Keeper_data_set::clear(const char *name_number_cluster)
+void Keeper_data_set_text::clear(const char *name_number_cluster)
 {
 	int number_of_pieces=number_of_examples_in_files.size();
 	for (int k=0;k!=number_of_pieces;k++)
@@ -366,41 +404,19 @@ void Keeper_data_set::clear(const char *name_number_cluster)
 	data_block.clear(); 
 }
 
-std::vector<int> Keeper_data_set::get_number_of_examples_in_files() const
+std::vector<int> Keeper_data_set_text::get_number_of_examples_in_files() const
 {
 	return  number_of_examples_in_files;
 }
 
-std::deque<std::valarray<double > >  Keeper_data_set::get_data_block() const
+std::deque<std::valarray<double > >  Keeper_data_set_text::get_data_block() const
 {
 	return data_block;
 }
 
-const char * Keeper_data_set::get_name_file_data() const
-{
-	return s_name_file_data.c_str();
-}
 
-int Keeper_data_set::get_allow_ram_volume() const
-{
-	return allow_ram_volume;
-}
 
-bool Keeper_data_set::get_top_element_data_block(std::valarray<double > &v)
-{
-	if (!data_block.empty())
-	{
-		v=data_block.front();
-		data_block.pop_front();
-		return true;
-	}
-	else
-	{
-		return false;
-	}
-}
-
-void Keeper_data_set::link_vector_stream_with_files(const char *name_number_cluster)
+void Keeper_data_set_text::link_vector_stream_with_files(const char *name_number_cluster)
 {
 	v_files_in_random.clear();
 	for (int k=0;k!=number_of_examples_in_files.size();k++) //прив€зка входных-выходных файлов к вектору
@@ -414,7 +430,7 @@ void Keeper_data_set::link_vector_stream_with_files(const char *name_number_clus
 	}
 }
 
-void Keeper_data_set::reboot_vector_stream_with_files(const char *name_number_cluster)
+void Keeper_data_set_text::reboot_vector_stream_with_files(const char *name_number_cluster)
 {
 	for (int k=0;k!=number_of_examples_in_files.size();k++) 
 	{
@@ -427,7 +443,7 @@ void Keeper_data_set::reboot_vector_stream_with_files(const char *name_number_cl
 	}
 }
 
-void Keeper_data_set::clear_vector_stream_with_files(const char *name_number_cluster)
+void Keeper_data_set_text::clear_vector_stream_with_files(const char *name_number_cluster)
 {
 	for (int k=0;k!=number_of_examples_in_files.size();k++) 
 	{
@@ -435,3 +451,145 @@ void Keeper_data_set::clear_vector_stream_with_files(const char *name_number_clu
 		v_files_in_random[k]->close();
 	}
 }
+/*Keeper_data_set_text*/
+
+/*Keeper_data_set_bin*/
+Keeper_data_set_bin::Keeper_data_set_bin(const char *t_name_file_data,const int t_allow_ram_volume):
+	Keeper_data_set(t_name_file_data,t_allow_ram_volume)
+{
+	stream_data.open(t_name_file_data,std::ios::binary);
+}
+
+Keeper_data_set_bin::Keeper_data_set_bin(const Keeper_data_set_bin &t):
+Keeper_data_set(t)
+{
+	
+}
+
+Keeper_data_set_bin & Keeper_data_set_bin::operator=(const Keeper_data_set_bin& t)
+{
+	Keeper_data_set::operator=(t);
+	return *this;
+}
+
+Keeper_data_set_bin::~Keeper_data_set_bin()
+{
+	
+}
+
+double Keeper_data_set_bin::get_number_of_examples(const int t_dim)
+{
+	stream_data.seekg(0,std::ios::end);
+	double fSize;
+	fSize=stream_data.tellg();
+	stream_data.seekg(0,std::ios::beg);
+	return (fSize/(sizeof(double)*t_dim));
+}
+
+bool Keeper_data_set_bin::get_example_in_order(std::valarray<double > &v, const int dim)
+{
+	bool result=false;
+	if (stream_data)
+	{
+		double tmp;
+		int sh=0;
+		while (stream_data)
+		{
+			stream_data.read( reinterpret_cast<char*>( &tmp ), sizeof tmp );
+			v[sh]=tmp;
+			sh++;
+			if (sh==dim)
+			{
+				result=true;
+				break;
+			}
+		}
+		
+	}
+	return result;
+}
+
+void Keeper_data_set_bin::get_example_in_random_order_whole_piece(std::valarray<double > &v, const int num_exam,const int t_dim)
+{
+	stream_data.seekg(sizeof(double)*t_dim*num_exam);
+	double tmp;
+	for (int i=0;i!=t_dim;i++)
+	{
+		stream_data.read( reinterpret_cast<char*>( &tmp ), sizeof tmp );
+		v[i]=tmp;
+	}
+}
+
+void Keeper_data_set_bin::re_open_stream()
+{
+	stream_data.clear();
+	stream_data.close();
+	stream_data.open(s_name_file_data.c_str(),std::ios::binary); 
+}
+
+bool Keeper_data_set_bin::prepare_out_in_random_order(const char *name_number_cluster,std::vector<int> &v_random_list,const int t_dim)
+{
+	if (number_of_examples_in_files.size()!=1) // 1 - количество кусков разбиени€, нельз€ всЄ поместить в пам€ть
+	{
+		/*дописать*/
+	    return false;
+	}
+	else // можно всЄ сразу поместить в пам€ть
+	{
+		std::deque<std::valarray<double > > t_data_block;
+		re_open_stream();
+		t_data_block=update_data_block(t_dim);
+		data_block.clear();
+		for (int num_rand : v_random_list)
+		{
+			data_block.push_back(t_data_block[num_rand]);
+		}
+		return true;
+	}
+}
+
+void  Keeper_data_set_bin::split_file_in_pieces(const char *name_number_cluster,const int t_dim)
+{
+	number_of_examples_in_files.push_back(this->get_number_of_examples(t_dim));
+	/*написать*/
+}
+
+std::deque<std::valarray<double > > Keeper_data_set_bin::update_data_block(const int t_dim)
+{
+	std::deque<std::valarray<double > > t_data_block;
+	std::valarray<double > v_tmp(0.0,t_dim);
+	const int mb_in_byte=1048576; // 1 mb = 1 048 576 bytes
+	int number_of_example=allow_ram_volume*((mb_in_byte)/(t_dim*sizeof(double)));
+	std::cout<<"number of allowed example="<<number_of_example<<"\n";
+	while ((stream_data)&&(number_of_example!=0))
+	{
+		bool ok=true;
+		int i=0;
+		double i_tmp;
+		while ((stream_data)&&(ok))
+		{
+			stream_data.read( reinterpret_cast<char*>( &i_tmp ), sizeof i_tmp );
+			v_tmp[i]=i_tmp;
+			if (i!=t_dim-1)
+			{
+				i++;
+			}
+			else
+			{
+				ok=false;
+			}
+		}
+		if (!ok)
+			t_data_block.push_back(v_tmp);
+		number_of_example--;
+	}
+	std::cout<<"the end update_data_block"<<"\n";
+	return t_data_block;
+}
+
+void Keeper_data_set_bin::clear(const char *name_number_cluster)
+{
+	data_block.clear(); 
+}
+
+/*Keeper_data_set_bin*/

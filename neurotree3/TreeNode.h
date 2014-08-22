@@ -33,7 +33,7 @@ struct data_node // ������ ������������ � 
 {
 	//vector< valarray < double > > train_set; // ��������� ���������
 	//deque< valarray < double > > train_set;
-	Keeper_data_set keep_data;
+	Keeper_data_set_bin keep_data;
 	valarray<double> pos_clus; // ���������� ��������
 	bool win; // �������� �� �������?
 	int number_node;
@@ -60,7 +60,7 @@ struct data_node // ������ ������������ � 
 		keep_data=t.keep_data;
 		return *this;
 	}
-	void set_keep_data(Keeper_data_set &t_keep_data)
+	void set_keep_data(Keeper_data_set_bin &t_keep_data)
 	{
 	   keep_data=t_keep_data;
 	}

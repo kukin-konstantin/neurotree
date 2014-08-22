@@ -1,4 +1,4 @@
-﻿/*
+/*
 Tree.h This file is part of the neurotree software package.
 Neurontree is method of clustering.
     
@@ -45,7 +45,7 @@ public:
 	void test(const char *t_name_file_clusters,const char *t_name_file_result);
 	void print_in_tree_file(const char *t_name_file_tree);
 	//void copy_data_set(std::deque<valarray<double > > &t_train_set,data_node &data); // old version need to remove
-	void copy_data_set(Keeper_data_set &keep,data_node &data);
+	void copy_data_set(Keeper_data_set_bin &keep,data_node &data);
 	~Tree();
 private:
 	TreeNode *_root;
@@ -75,7 +75,7 @@ private:
 	void load_tree_from_file_helper(TreeNode *node,string &s,ifstream &t_data_tree, int &sh,int &sh_vec);
     deque<valarray<double > > read_data_to_memory();//old version, unuse
 	valarray<double> def_pos_root_node(std::deque<valarray<double > > &t_train_set);//����������� ��������� ��������� �������
-	valarray<double> def_pos_root_node(Keeper_data_set &keep);
+	valarray<double> def_pos_root_node(Keeper_data_set_bin &keep);
 	void expand_neuron_m_thread(int num_nodes,int num_threads);
 	void expand_neuron(int first_index,int last_index,int num_calc_node); // � �������� ����������� ��������� ���������� map<TreeNode *,int>
 	void learn_neuron_m_thread(int num_nodes,int num_threads,double (Norm::*f_norm) (const valarray<double>&));
@@ -105,7 +105,7 @@ Tree::Tree(const char *t_name_file_data,int t_dim,double t_accuar,int t_max_numb
 _root(0),name_file_data(t_name_file_data),accuar(t_accuar),max_number_cluster(t_max_number_cluster),norm(t_norm),number_iter(t_number_iter),numberORaccuar(t_numberORaccuar),number_proc(t_number_proc),memory_size(t_memory_size)
 {
 	dim=t_dim;
-	Keeper_data_set keep(name_file_data,t_memory_size);
+	Keeper_data_set_bin keep(name_file_data,t_memory_size);
 	size_data=keep.get_number_of_examples(dim);
 	valarray<double> v_pos_root=def_pos_root_node(keep);
 
@@ -159,7 +159,7 @@ _root(0),name_file_data(t_name_file_data),memory_size(t_memory_size)
 		valarray<double> v_pos_root(0.0,dim);
 		if (read_vec(data_tree,v_pos_root))
 		{
-			Keeper_data_set keep(name_file_data,t_memory_size);
+			Keeper_data_set_bin keep(name_file_data,t_memory_size);
 			size_data=keep.get_number_of_examples(dim);
 			data_node data(v_pos_root,name_file_data,memory_size); //change check
 			copy_data_set(keep,data);
@@ -199,7 +199,7 @@ _root(0),name_file_data(t_name_file_data),memory_size(t_memory_size)
 	//std::copy(t_train_set.begin(),t_train_set.end(),std::back_inserter(data.train_set));
 }*/
 
-void Tree::copy_data_set(Keeper_data_set &keep,data_node &data)
+void Tree::copy_data_set(Keeper_data_set_bin &keep,data_node &data)
 {
 	data.set_keep_data(keep);
 }
@@ -417,7 +417,7 @@ valarray<double> Tree::def_pos_root_node(std::deque<valarray<double > > &t_train
 	return v_cent;
 }
 
-valarray<double> Tree::def_pos_root_node(Keeper_data_set &keep)
+valarray<double> Tree::def_pos_root_node(Keeper_data_set_bin &keep)
 {
 	double umn_pr=keep.get_number_of_examples(dim);
 	size_data=umn_pr;
@@ -465,8 +465,11 @@ void Tree::learn_max_number(double (Norm::*f_norm) (const valarray<double>&))
 	while (!cond_exit_max_number()) // Если количество кластеров превышено или количество примеров в кластере меньше допустимого,то выход из цикла 
 	{
 		int num_nodes=last_layer.size();//define number of nodes
+		std::cout<<"expand_neuron_m_thread"<<"\n";
 		expand_neuron_m_thread(num_nodes,num_threads);
+		std::cout<<"learn_neuron_m_thread"<<"\n";
 		learn_neuron_m_thread(num_nodes,num_threads,f_norm);
+		std::cout<<"del_dead_m_thread"<<"\n";
 		del_dead_m_thread(num_nodes,num_threads,f_norm);
 	}
 }
@@ -543,7 +546,11 @@ void Tree::learn_neuron(Gener &A,double (Norm::*f_norm) (const valarray<double>&
 					learn_one_iteration(T_tmp,f_norm,name_number_cluster,v_tmp,x);
 				}
 			}
-			else // нельзя поместить в память
+			else
+			{
+				std::cout<<"fail try again. I need more memory"<<"\n";
+			}
+			/*else // нельзя поместить в память
 			{
 				std::cout<<"prepare_out finish, DIVIDE!"<<"\n";
 				valarray<double> v_tmp(0.0,dim);
@@ -565,7 +572,7 @@ void Tree::learn_neuron(Gener &A,double (Norm::*f_norm) (const valarray<double>&
 				std::cout<<"part2"<<"\n";
 				T_tmp->_data.keep_data.clear_vector_stream_with_files(name_number_cluster);
 				std::cout<<"part3"<<"\n";
-			}
+			}*/
 		}
 		T_tmp->_data.keep_data.clear(name_number_cluster);
 	}

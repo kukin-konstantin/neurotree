@@ -38,13 +38,12 @@ int main()
      
 	string s_setting;	   //otkomentit' pri norm zapuske
     cin >> s_setting;    //otkomentit' pri norm zapuske
-
-    //string s_setting="sett_learn.txt";
+    //s_setting="sett_learn.txt";
     
 	cout<<"Enter the number of processors"<<"\n";
 	int number_proc;
 	cin>>number_proc;
-
+	//number_proc=2;
     
 	const char *setting=s_setting.c_str();
     Data_reader sett(setting,"error.txt");
