@@ -122,7 +122,7 @@ int main()
             }
     }
 	sett.close_data_error();
-	//system("pause");
+	std::system("pause");
     return 0;
 }
 

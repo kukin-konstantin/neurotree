@@ -16,7 +16,7 @@ s_name_file_data(t.s_name_file_data),allow_ram_volume(t.allow_ram_volume)
 Keeper_data_set & Keeper_data_set::operator=(const Keeper_data_set& t)
 {
 	s_name_file_data=t.get_name_file_data();
-	allow_ram_volume=t.get_allow_ram_volume(); 
+	allow_ram_volume=t.get_allow_ram_volume();
 	return *this;
 }
 
@@ -463,12 +463,13 @@ Keeper_data_set_bin::Keeper_data_set_bin(const char *t_name_file_data,const int 
 Keeper_data_set_bin::Keeper_data_set_bin(const Keeper_data_set_bin &t):
 Keeper_data_set(t)
 {
-	
+	stream_data.open(t.get_name_file_data(),std::ios::binary);
 }
 
 Keeper_data_set_bin & Keeper_data_set_bin::operator=(const Keeper_data_set_bin& t)
 {
 	Keeper_data_set::operator=(t);
+	stream_data.open(t.get_name_file_data(),std::ios::binary);
 	return *this;
 }
 
@@ -532,14 +533,17 @@ bool Keeper_data_set_bin::prepare_out_in_random_order(const char *name_number_cl
 	if (number_of_examples_in_files.size()!=1) // 1 - количество кусков разбиени€, нельз€ всЄ поместить в пам€ть
 	{
 		/*дописать*/
+		std::cout<<"fail";
 	    return false;
 	}
 	else // можно всЄ сразу поместить в пам€ть
 	{
+		std::cout<<"good"<<"\n";
 		std::deque<std::valarray<double > > t_data_block;
 		re_open_stream();
 		t_data_block=update_data_block(t_dim);
 		data_block.clear();
+		std::cout<<"v_random_list.size()="<<v_random_list.size()<<"\n";
 		for (int num_rand : v_random_list)
 		{
 			data_block.push_back(t_data_block[num_rand]);
@@ -561,14 +565,19 @@ std::deque<std::valarray<double > > Keeper_data_set_bin::update_data_block(const
 	const int mb_in_byte=1048576; // 1 mb = 1 048 576 bytes
 	int number_of_example=allow_ram_volume*((mb_in_byte)/(t_dim*sizeof(double)));
 	std::cout<<"number of allowed example="<<number_of_example<<"\n";
-	while ((stream_data)&&(number_of_example!=0))
+	bool b_out_file=true;
+	while ((!stream_data.eof())&&(number_of_example!=0)&&(b_out_file))
 	{
 		bool ok=true;
 		int i=0;
 		double i_tmp;
-		while ((stream_data)&&(ok))
+		while ((!stream_data.eof())&&(ok))
 		{
 			stream_data.read( reinterpret_cast<char*>( &i_tmp ), sizeof i_tmp );
+			if ((stream_data.eof())||(!stream_data.good()))
+			{
+				b_out_file=false;
+			}
 			v_tmp[i]=i_tmp;
 			if (i!=t_dim-1)
 			{
@@ -584,6 +593,7 @@ std::deque<std::valarray<double > > Keeper_data_set_bin::update_data_block(const
 		number_of_example--;
 	}
 	std::cout<<"the end update_data_block"<<"\n";
+	std::cout<<"t_data_block.size() "<<t_data_block.size()<<"\n";
 	return t_data_block;
 }
 
