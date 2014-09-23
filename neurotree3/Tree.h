@@ -550,11 +550,7 @@ void Tree::learn_neuron(Gener &A,double (Norm::*f_norm) (const valarray<double>&
 					learn_one_iteration(T_tmp,f_norm,name_number_cluster,v_tmp,x);
 				}
 			}
-			else
-			{
-				std::cout<<"fail try again. I need more memory"<<"\n";
-			}
-			/*else // нельзя поместить в память
+			else // нельзя поместить в память
 			{
 				std::cout<<"prepare_out finish, DIVIDE!"<<"\n";
 				valarray<double> v_tmp(0.0,dim);
@@ -576,7 +572,7 @@ void Tree::learn_neuron(Gener &A,double (Norm::*f_norm) (const valarray<double>&
 				std::cout<<"part2"<<"\n";
 				T_tmp->_data.keep_data.clear_vector_stream_with_files(name_number_cluster);
 				std::cout<<"part3"<<"\n";
-			}*/
+			}
 		}
 		T_tmp->_data.keep_data.clear(name_number_cluster);
 	}
