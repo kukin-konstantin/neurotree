@@ -317,7 +317,7 @@ void Tree::test(const char *t_name_file_clusters,const char *t_name_file_result)
 		data_result<<"\n";
 		//data_result<<i_tmp<<"\n";
 		/*изменение 13.11.2012*/
-		cout<<i_tmp<<"\n";
+		//cout<<i_tmp<<"\n";
 		/*new console*/
 		//average dist
 		numbers_data_to_one_cluster[i_tmp]+=1;
