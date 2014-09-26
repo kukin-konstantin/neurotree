@@ -171,16 +171,19 @@ _root(0),name_file_data(t_name_file_data),memory_size(t_memory_size)
 			{
 				int sh=0;
 				int sh_vec=0;
+				std::cout<<"Left"<<"\t";
 				load_tree_from_file_helper(_root,s,data_tree,sh,sh_vec);
 			}
 			else
 			{
+				std::cout<<"not Left "<<s<<"\n";
 				error();
 			}
 		}
 	}
 	else
 	{
+		std::cout<<"not dim "<<"\n";
 		error();
 	}
 	data_tree.clear();
@@ -878,6 +881,7 @@ void Tree::load_tree_from_file_helper(TreeNode *node,string &s,ifstream &t_data_
 		}
 		else
 		{
+			std::cout<<"Left NULL "<<"\t";
 			Char_to_double b(s);
 			double d_tmp;
 			if (b>>d_tmp)
@@ -909,6 +913,7 @@ void Tree::load_tree_from_file_helper(TreeNode *node,string &s,ifstream &t_data_
 	else if (s=="Right")
 	{
 		valarray<double> v_pos_root(0.0,dim);
+		std::cout<<"Right "<<"\t";
 		if (read_vec(t_data_tree,v_pos_root))
 		{	
 			data_node data(v_pos_root,name_file_data,memory_size); //change check
@@ -925,6 +930,7 @@ void Tree::load_tree_from_file_helper(TreeNode *node,string &s,ifstream &t_data_
 	}
 	else
 	{
+		std::cout<<"not Right "<<s<<"\n";
 		error();
 	}
 }
@@ -944,6 +950,12 @@ bool Tree::read_vec(ifstream &t_data_tree,valarray<double> &v)
 		}
 		else
 		{
+			std::cout<<"# i="<<i<<"\n";
+			for (int k=0;k!=i;k++)
+			{
+				std::cout<<v[k]<<"\t";
+			}
+			std::cout<<"b "<<s<<"\n";
 			error();
 			return false;
 		}

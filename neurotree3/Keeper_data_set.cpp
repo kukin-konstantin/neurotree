@@ -225,6 +225,7 @@ void  Keeper_data_set_text::split_file_in_pieces(const char *name_number_cluster
 	const int mb_in_byte=1048576; // 1 mb = 1 048 576 bytes
 	const int number_of_example=allow_ram_volume*((mb_in_byte)/(t_dim*sizeof(double)));
 	int sh_part_of_files=0;
+	number_of_examples_in_files.clear();
 	while (stream_data)
 	{
 		int t_number_of_example=number_of_example;
@@ -634,6 +635,7 @@ void  Keeper_data_set_bin::split_file_in_pieces(const char *name_number_cluster,
 	const int mb_in_byte=1048576; // 1 mb = 1 048 576 bytes
 	const int number_of_example=allow_ram_volume*((mb_in_byte)/(t_dim*sizeof(double)));
 	int num_piece=(num_exam_real/number_of_example);
+	number_of_examples_in_files.clear();
 	if (num_piece==0)
 	{
 		number_of_examples_in_files.push_back(int(num_exam_real));
