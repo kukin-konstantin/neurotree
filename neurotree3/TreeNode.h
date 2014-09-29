@@ -90,8 +90,8 @@ private:
 
 TreeNode::TreeNode(data_node &data):
 _data(data),
-_left(0),
-_right(0)
+_left(nullptr),
+_right(nullptr)
 {
 
 }

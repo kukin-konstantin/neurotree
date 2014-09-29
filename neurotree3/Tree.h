@@ -658,8 +658,8 @@ void Tree::del_dead_neuron(double (Norm::*f_norm) (const valarray<double>&),int 
 			T_tmp_left=0;
 			T_tmp->_data.pos_clus=T_tmp->_right->_data.pos_clus;
 			T_tmp_right=0;
-			T_tmp->_right=NULL;
-			T_tmp->_left=NULL;
+			T_tmp->_right=nullptr;
+			T_tmp->_left=nullptr;
 			tmp_layer_local.push_back(T_tmp);
 		}
 		else if (T_tmp_right->_data.win==0) // источник возможных ошибок при возникновении мертвых кластеров, проверить на модельной ситуации
@@ -668,8 +668,8 @@ void Tree::del_dead_neuron(double (Norm::*f_norm) (const valarray<double>&),int 
 			T_tmp->_right=0;
 			T_tmp->_data.pos_clus=T_tmp->_left->_data.pos_clus;
 			T_tmp_left=0;
-			T_tmp->_left=NULL;
-			T_tmp->_right=NULL;
+			T_tmp->_left=nullptr;
+			T_tmp->_right=nullptr;
 			tmp_layer_local.push_back(T_tmp);
 		}
 		else
@@ -841,7 +841,7 @@ bool Tree::cond_exit_max_number()
 
 void Tree::print_in_tree_file_helper(TreeNode *node,ofstream &t_data_tree)
 {
-	if (node != 0)
+	if (node != nullptr)
     {
 		for (unsigned int i=0;i!=node->_data.pos_clus.size();i++)
 		{
@@ -976,7 +976,7 @@ int Tree::get_near_cluster(valarray<double> &v,double (Norm::*f_norm) (const val
 	double norma_l;
 	double norma_r;
 	TreeNode *node=_root;
-	while (node->_left!=NULL)
+	while (node->_left!=nullptr)
 	{
 		pos_clus_left=node->_left->_data.pos_clus;
 		pos_clus_right=node->_right->_data.pos_clus;
@@ -1008,7 +1008,7 @@ vector<int> Tree::get_near_cluster_vec(std::valarray<double> &v, double (Norm::*
 	double norma_l;
 	double norma_r;
 	TreeNode *node=_root;
-	while (node->_left!=NULL)
+	while (node->_left!=nullptr)
 	{
 		pos_clus_left=node->_left->_data.pos_clus;
 		pos_clus_right=node->_right->_data.pos_clus;
