@@ -69,7 +69,8 @@ private:
 	boost::mutex layer_push_mutex;
 	boost::mutex acc_mutex;
 	/*������ ���������*/
-    
+	std::ofstream f_indic;// add-on for perfomance
+	/**/
     void delete_helper(TreeNode *);
 	void print_in_tree_file_helper(TreeNode *node,ofstream &t_data_tree);
 	void load_tree_from_file_helper(TreeNode *node,string &s,ifstream &t_data_tree, int &sh,int &sh_vec);
@@ -86,6 +87,7 @@ private:
 	void cond_exit_acc(double (Norm::*f_norm) (const valarray<double>&),int first_index,int last_index); // posible to split thread
 	bool cond_exit_acc_m_thread(int num_nodes,int num_threads,double (Norm::*f_norm) (const valarray<double>&));
 	bool cond_exit_max_number();
+	double get_sigma_cluster_indicator(double (Norm::*f_norm) (const valarray<double>&));// показатель сходимости кластеризационного алгоритма
 	double alpha(double &x);
 	void del_dead_neuron(double (Norm::*f_norm) (const valarray<double>&),int first_index,int last_index);//posible to split thread (techology of mutex, problem - sh, require to block)
 	void del_dead_m_thread(int num_nodes,int num_threads,double (Norm::*f_norm) (const valarray<double>&));
@@ -126,6 +128,7 @@ _root(0),name_file_data(t_name_file_data),accuar(t_accuar),max_number_cluster(t_
 	last_layer.push_back(_root);
 	val_func=0;
 	last_number_clusters=0;
+	f_indic.open("indicators.txt");//add on for graph
 }
  
 Tree::Tree(const char *t_name_file_data,const char *t_name_file_tree,int t_memory_size):
@@ -362,17 +365,18 @@ void Tree::test(const char *t_name_file_clusters,const char *t_name_file_result)
 
 Tree::~Tree()
 {
+	f_indic.clear();
+	f_indic.close();
     delete_helper(_root);
 }
  
 
 void Tree::delete_helper(TreeNode *node)
 {
-    if (node != 0)
+	if (node != nullptr)
     {
         delete_helper(node->_left);
         delete_helper(node->_right);
- 
         delete node;
     }
 }
@@ -461,11 +465,36 @@ void Tree::learn_acc(double (Norm::*f_norm) (const valarray<double>&))
 	}
 }
 
+double Tree::get_sigma_cluster_indicator(double (Norm::*f_norm) (const valarray<double>&))
+{
+	TreeNode * T_tmp;
+	valarray<double> v_tmp(0.0,dim);
+	valarray<double> v_pos_clus(0.0,dim);
+	valarray<double> v_shift(0.0,dim);
+	double d_tmp;
+	Norm *o_norm=0;
+	double summa_acc=0;
+	for (int i_num_node = 0; i_num_node!=last_layer.size(); i_num_node++)
+	{
+		T_tmp=last_layer[i_num_node];
+		v_pos_clus=T_tmp->_data.pos_clus;
+		T_tmp->_data.keep_data.re_open_stream();
+		while (T_tmp->_data.keep_data.get_example_in_order(v_tmp,dim))
+		{
+			v_shift=v_tmp-v_pos_clus;
+			d_tmp=(o_norm->*f_norm)(v_shift);
+			summa_acc+=(d_tmp*d_tmp)/size_data;
+		}
+	}
+	return sqrt(summa_acc);
+}
+
 void Tree::learn_max_number(double (Norm::*f_norm) (const valarray<double>&))
 {
 	/*����������� ������ ���� ������ ������: ���� �� ������ ������, ������ �� ������ ������*/
 	int num_of_avail_proc= boost::thread::hardware_concurrency();
 	size_t num_threads=get_number_of_proc(num_of_avail_proc);
+	int l_len_tree=1;
 	while (!cond_exit_max_number()) // Если количество кластеров превышено или количество примеров в кластере меньше допустимого,то выход из цикла 
 	{
 		int num_nodes=last_layer.size();//define number of nodes
@@ -475,6 +504,10 @@ void Tree::learn_max_number(double (Norm::*f_norm) (const valarray<double>&))
 		learn_neuron_m_thread(num_nodes,num_threads,f_norm);
 		std::cout<<"del_dead_m_thread"<<"\n";
 		del_dead_m_thread(num_nodes,num_threads,f_norm);
+		//add-on for graph
+		f_indic<<l_len_tree<<"\t"<<last_layer.size()<<"\t";//add-on for graph
+		f_indic<<get_sigma_cluster_indicator(f_norm)<<"\n";//add-on for graph
+		l_len_tree++;
 	}
 }
 
