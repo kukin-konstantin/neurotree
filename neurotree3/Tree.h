@@ -213,7 +213,12 @@ void Tree::copy_data_set(Keeper_data_set_bin &keep,data_node &data)
 
 void Tree::print_in_tree_file(const char *t_name_file_tree)
 {
-	ofstream data_tree(t_name_file_tree);
+	ofstream data_tree;
+	data_tree.open(t_name_file_tree);
+	if (!data_tree)
+	{
+		cout<<"shit happens"<<"\n";
+	}
 	data_tree<<dim<<"\n";
 	cout<<dim<<"\n";
 	if (norm==Evkl)
