@@ -693,9 +693,9 @@ void Tree::del_dead_neuron(double (Norm::*f_norm) (const valarray<double>&),int 
 		if (T_tmp_left->_data.win==0) // источник возможных ошибок при возникновении мертвых кластеров, проверить на модельной ситуации
 		{
 			std::cout<<"1_del"<<"\n";
-			T_tmp_left=0;
+			T_tmp_left=nullptr;
 			T_tmp->_data.pos_clus=T_tmp->_right->_data.pos_clus;
-			T_tmp_right=0;
+			T_tmp_right=nullptr;
 			T_tmp->_right=nullptr;
 			T_tmp->_left=nullptr;
 			tmp_layer_local.push_back(T_tmp);
@@ -703,9 +703,9 @@ void Tree::del_dead_neuron(double (Norm::*f_norm) (const valarray<double>&),int 
 		else if (T_tmp_right->_data.win==0) // источник возможных ошибок при возникновении мертвых кластеров, проверить на модельной ситуации
 		{
 			std::cout<<"2_del"<<"\n";
-			T_tmp->_right=0;
+			T_tmp->_right=nullptr;
 			T_tmp->_data.pos_clus=T_tmp->_left->_data.pos_clus;
-			T_tmp_left=0;
+			T_tmp_left=nullptr;
 			T_tmp->_left=nullptr;
 			T_tmp->_right=nullptr;
 			tmp_layer_local.push_back(T_tmp);
@@ -916,8 +916,8 @@ void Tree::load_tree_from_file_helper(TreeNode *node,string &s,ifstream &t_data_
 			node->_data.number_node=sh;
 			last_layer.push_back(node);
 			sh++; 
-			node->_left=0;
-			node->_right=0;
+			node->_left=nullptr;
+			node->_right=nullptr;
 		}
 		else
 		{
