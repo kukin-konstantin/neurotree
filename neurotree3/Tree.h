@@ -342,11 +342,13 @@ void Tree::test(const char *t_name_file_clusters,const char *t_name_file_result)
 	/*������ ��������� �������*/
 	TreeNode *T_tmp;
 	ofstream data_clusters(t_name_file_clusters);
-	vector<TreeNode *>::iterator it=last_layer.begin();
+	//vector<TreeNode *>::iterator it=last_layer.begin();
 	cout<<"data cluster"<<"\n";//add
-	while (it!=last_layer.end())
+	//while (it!=last_layer.end())
+	for (auto &it :last_layer)
 	{
-		T_tmp=(*it);
+		//T_tmp=(*it);
+		T_tmp=it;
 		for (unsigned int i=0;i!=T_tmp->_data.pos_clus.size();i++)
 		{
 			/*data_clusters<<T_tmp->_data.pos_clus[i]<<"\t";//add  old*/
