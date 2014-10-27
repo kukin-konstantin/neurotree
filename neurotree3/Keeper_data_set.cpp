@@ -814,4 +814,10 @@ bool Keeper_data_set_bin::get_example_in_random_order(std::valarray<double > &v,
 	}
 }
 
+void Keeper_data_set_bin::close_stream()
+{
+	stream_data.clear();
+	stream_data.close();
+}
+
 /*Keeper_data_set_bin*/

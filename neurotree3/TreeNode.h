@@ -80,7 +80,9 @@ public:
 	TreeNode &operator=(const TreeNode& t);
     data_node get_data() const; // ������ ������ ����������� ����
 	//void copy_data_set(std::deque<valarray<double > > &t_train_set); //old_version need to remove
+	void set_el_height(int t_el_height);
 private:
+	int el_height;
     data_node _data; 
     TreeNode *_left;
     TreeNode *_right;
@@ -118,5 +120,10 @@ data_node TreeNode::get_data() const
 		t_train_set.pop_front();
 	}
 }*/
+
+void TreeNode::set_el_height(int t_el_height)
+{
+	el_height=t_el_height;
+}
 
 #endif

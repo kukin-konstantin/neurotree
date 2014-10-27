@@ -43,7 +43,7 @@ public:
     Tree(const char *t_name_file_data,const char *t_name_file_tree,int t_memory_size); //конструктор для тестирования
 	void learn(); // �������� ������
 	void test(const char *t_name_file_clusters,const char *t_name_file_result);
-	void print_in_tree_file(const char *t_name_file_tree);
+	void print_in_tree_file(std::string &t_name_file_tree);
 	//void copy_data_set(std::deque<valarray<double > > &t_train_set,data_node &data); // old version need to remove
 	void copy_data_set(Keeper_data_set_bin &keep,data_node &data);
 	~Tree();
@@ -73,7 +73,7 @@ private:
 	/**/
     void delete_helper(TreeNode *);
 	void print_in_tree_file_helper(TreeNode *node,ofstream &t_data_tree);
-	void load_tree_from_file_helper(TreeNode *node,string &s,ifstream &t_data_tree, int &sh,int &sh_vec);
+	void load_tree_from_file_helper(TreeNode *node,string &s,ifstream &t_data_tree, int &sh,int &sh_vec,int &t_el_height);
     deque<valarray<double > > read_data_to_memory();//old version, unuse
 	valarray<double> def_pos_root_node(std::deque<valarray<double > > &t_train_set);//����������� ��������� ��������� �������
 	valarray<double> def_pos_root_node(Keeper_data_set_bin &keep);
@@ -175,7 +175,9 @@ _root(0),name_file_data(t_name_file_data),memory_size(t_memory_size)
 				int sh=0;
 				int sh_vec=0;
 				std::cout<<"Left"<<"\t";
-				load_tree_from_file_helper(_root,s,data_tree,sh,sh_vec);
+				int t_el_height=0;
+				_root->set_el_height(t_el_height);
+				load_tree_from_file_helper(_root,s,data_tree,sh,sh_vec,t_el_height);
 			}
 			else
 			{
@@ -211,10 +213,10 @@ void Tree::copy_data_set(Keeper_data_set_bin &keep,data_node &data)
 	data.set_keep_data(keep);
 }
 
-void Tree::print_in_tree_file(const char *t_name_file_tree)
+void Tree::print_in_tree_file(std::string &t_name_file_tree)
 {
 	ofstream data_tree;
-	data_tree.open(t_name_file_tree);
+	data_tree.open(t_name_file_tree.c_str(),ios::out);
 	if (!data_tree)
 	{
 		cout<<"shit happens"<<"\n";
@@ -492,6 +494,7 @@ double Tree::get_sigma_cluster_indicator(double (Norm::*f_norm) (const valarray<
 			d_tmp=(o_norm->*f_norm)(v_shift);
 			summa_acc+=(d_tmp*d_tmp)/size_data;
 		}
+		T_tmp->_data.keep_data.close_stream();
 	}
 	return sqrt(summa_acc);
 }
@@ -538,9 +541,9 @@ void Tree::expand_neuron(int first_index,int last_index, int num_calc_node)
 		T_tmp_left = new TreeNode(data_l);
 		T_tmp_right = new TreeNode(data_r);
 		T_tmp->_left=T_tmp_left;
-		T_tmp->_left->_data.keep_data.re_open_stream();
+		//T_tmp->_left->_data.keep_data.re_open_stream();
 		T_tmp->_right=T_tmp_right;
-		T_tmp->_right->_data.keep_data.re_open_stream();
+		//T_tmp->_right->_data.keep_data.re_open_stream();
 	}
 }
 
@@ -618,6 +621,7 @@ void Tree::learn_neuron(Gener &A,double (Norm::*f_norm) (const valarray<double>&
 			}
 		}
 		T_tmp->_data.keep_data.clear(name_number_cluster);
+		T_tmp->_data.keep_data.close_stream();
 	}
 }
 
@@ -759,6 +763,7 @@ void Tree::del_dead_neuron(double (Norm::*f_norm) (const valarray<double>&),int 
 			std::string  s_tmp=std::to_string(T_tmp->_data.number_node);
 		    const char *name_number_cluster=s_tmp.c_str();
 			T_tmp->_data.keep_data.clear(name_number_cluster); //T_tmp->_data.train_set.clear();
+			T_tmp->_data.keep_data.close_stream();
 			tmp_layer_local.push_back(T_tmp_left);// здесь должно быть оформление keep_data_set
 			tmp_layer_local.push_back(T_tmp_right);// здесь должно быть оформление keep_data_set
 		}
@@ -886,26 +891,27 @@ void Tree::print_in_tree_file_helper(TreeNode *node,ofstream &t_data_tree)
 		for (unsigned int i=0;i!=node->_data.pos_clus.size();i++)
 		{
 			t_data_tree<<node->_data.pos_clus[i]<<"\t";
-			cout<<node->_data.pos_clus[i]<<"\t";//add
+			//cout<<node->_data.pos_clus[i]<<"\t";//add
 		}
 		t_data_tree<<"Left"<<"\n";
-		cout<<"Left"<<"\n";//add
+		//cout<<"Left"<<"\n";//add
         print_in_tree_file_helper(node->_left,t_data_tree);
 		t_data_tree<<"Right"<<"\n";
-		cout<<"Right"<<"\n";//add
+		//cout<<"Right"<<"\n";//add
         print_in_tree_file_helper(node->_right,t_data_tree);
+		cout<<"##"<<"\t";
     }
 	else
 	{
 		t_data_tree<<"NULL"<<"\n";
-		cout<<"NULL"<<"\n";//add
+		//cout<<"NULL"<<"\n";//add
 	}
 }
 
 
 
 
-void Tree::load_tree_from_file_helper(TreeNode *node,string &s,ifstream &t_data_tree, int &sh,int &sh_vec)
+void Tree::load_tree_from_file_helper(TreeNode *node,string &s,ifstream &t_data_tree, int &sh,int &sh_vec,int &t_el_height)
 {
 	if (s=="Left")
 	{
@@ -944,10 +950,13 @@ void Tree::load_tree_from_file_helper(TreeNode *node,string &s,ifstream &t_data_
 					sh_vec++;
 					//изменение 13.11.12
 					node->_left = new TreeNode(data);
+					t_el_height++;
+					node->_left->set_el_height(t_el_height);
 					//copy_data_set(data.train_set,node->_left->_data); //изменить keep_data_set
 					t_data_tree>>s;
-					load_tree_from_file_helper(node->_left,s,t_data_tree,sh,sh_vec);
-					load_tree_from_file_helper(node,s,t_data_tree,sh,sh_vec);
+					load_tree_from_file_helper(node->_left,s,t_data_tree,sh,sh_vec,t_el_height);
+					t_el_height--;
+					load_tree_from_file_helper(node,s,t_data_tree,sh,sh_vec,t_el_height);
 				}
 			}
 		}
@@ -965,9 +974,12 @@ void Tree::load_tree_from_file_helper(TreeNode *node,string &s,ifstream &t_data_
 			sh_vec++;
 			//изменение 13.11.12
 			node->_right = new TreeNode(data);
+			t_el_height++;
+			node->_right->set_el_height(t_el_height);
 			//copy_data_set(data.train_set,node->_right->_data); // old version need to remove
 			t_data_tree>>s;
-			load_tree_from_file_helper(node->_right,s,t_data_tree,sh,sh_vec);
+			load_tree_from_file_helper(node->_right,s,t_data_tree,sh,sh_vec,t_el_height);
+			t_el_height--;
 		}
 	}
 	else
