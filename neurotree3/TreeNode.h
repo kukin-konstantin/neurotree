@@ -81,8 +81,11 @@ public:
     data_node get_data() const; // ������ ������ ����������� ����
 	//void copy_data_set(std::deque<valarray<double > > &t_train_set); //old_version need to remove
 	void set_el_height(int t_el_height);
+	bool operator==(const TreeNode& t)const;
+    bool operator<(const TreeNode& t)const;
 private:
 	int el_height;
+	double summa_indic;
     data_node _data; 
     TreeNode *_left;
     TreeNode *_right;
@@ -93,7 +96,8 @@ private:
 TreeNode::TreeNode(data_node &data):
 _data(data),
 _left(nullptr),
-_right(nullptr)
+_right(nullptr),
+summa_indic(0.0)
 {
 
 }
@@ -103,6 +107,8 @@ TreeNode & TreeNode::operator=(const TreeNode& t)
 	_data=t._data; // правильно используется? data_node operator= не надо писать?
 	_left=t._left;
 	_right=t._right;
+	el_height=t.el_height;
+	summa_indic=t.summa_indic;
 	return *this;
 }
 
@@ -124,6 +130,30 @@ data_node TreeNode::get_data() const
 void TreeNode::set_el_height(int t_el_height)
 {
 	el_height=t_el_height;
+}
+
+bool TreeNode::operator==(const TreeNode& t)const
+{
+	if (this->el_height==t.el_height)
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
+
+bool TreeNode::operator<(const TreeNode& t)const
+{
+	if (this->el_height<t.el_height)
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
 }
 
 #endif

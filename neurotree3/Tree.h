@@ -24,6 +24,7 @@ Copyright (C) 2011 by Kukin K.A.
  
 #include <fstream>
 #include <vector>
+#include <algorithm>
 #include <boost/thread/thread.hpp>
 #include <boost/thread/mutex.hpp>
 #include "TreeNode.h"
@@ -34,7 +35,14 @@ Copyright (C) 2011 by Kukin K.A.
 #include "gener.h"
 using namespace std;
 
+template<class T>
+bool ptr_less(const T* lhs, const T* rhs);
 
+template<class T>
+bool ptr_less(const T* lhs, const T* rhs)
+{
+	return *lhs < *rhs;
+}
 
 class Tree
 {
@@ -51,6 +59,7 @@ private:
 	TreeNode *_root;
 	vector<TreeNode *> last_layer; //
 	vector<TreeNode *> tmp_layer;
+	vector<TreeNode *> indic_layer;
 	/*������ ���������*/
 	const char *name_file_data;
 	double size_data;
@@ -87,14 +96,15 @@ private:
 	void cond_exit_acc(double (Norm::*f_norm) (const valarray<double>&),int first_index,int last_index); // posible to split thread
 	bool cond_exit_acc_m_thread(int num_nodes,int num_threads,double (Norm::*f_norm) (const valarray<double>&));
 	bool cond_exit_max_number();
-	double get_sigma_cluster_indicator(double (Norm::*f_norm) (const valarray<double>&));// показатель сходимости кластеризационного алгоритма
+	double get_sigma_cluster_indicator_learn(double (Norm::*f_norm) (const valarray<double>&));// показатель сходимости кластеризационного алгоритма во время обучения
+	void get_sigma_cluster_indicator_test(double (Norm::*f_norm) (const valarray<double>&));// показатель сходимости кластеризационного алгоритма во время обучения
 	double alpha(double &x);
 	void del_dead_neuron(double (Norm::*f_norm) (const valarray<double>&),int first_index,int last_index);//posible to split thread (techology of mutex, problem - sh, require to block)
 	void del_dead_m_thread(int num_nodes,int num_threads,double (Norm::*f_norm) (const valarray<double>&));
 	void assign_num_node_layer();
 	bool read_vec(ifstream &t_data_tree,valarray<double> &v);
 	int get_near_cluster(valarray<double> &v,double (Norm::*f_norm) (const valarray<double>&));
-	vector<int> get_near_cluster_vec(valarray<double> &v,double (Norm::*f_norm) (const valarray<double>&));
+	vector<int> get_near_cluster_vec(valarray<double> &v,double (Norm::*f_norm) (const valarray<double>&),double t_size_data);
 	int get_number_of_proc(int number_all_proc);
 	void get_average_dist_in_clusters(vector<double> &average_cluster_rad,vector<int> &numbers_data_to_one_cluster);// future change: add possibility change name file
 	void get_dist_between_clusters(double (Norm::*f_norm) (const valarray<double>&));
@@ -191,8 +201,10 @@ _root(0),name_file_data(t_name_file_data),memory_size(t_memory_size)
 		std::cout<<"not dim "<<"\n";
 		error();
 	}
+	std::sort(indic_layer.begin(),indic_layer.end(),&ptr_less<TreeNode>);
 	data_tree.clear();
 	data_tree.close();
+	f_indic.open("indicators.txt");//add on for graph
 }
 
 
@@ -314,14 +326,15 @@ void Tree::test(const char *t_name_file_clusters,const char *t_name_file_result)
 	ofstream data_result(t_name_file_result);
 	cout<<"result clustering"<<"\n";//add
 	//for (unsigned int i=0;i!=t_test_set.size();i++) // заменить цикл на keep_data_set
-	
+	double t_size_train_data=_root->_data.keep_data.get_number_of_examples(dim);
+	_root->_data.keep_data.re_open_stream();
 	while (_root->_data.keep_data.get_example_in_order(v_tmp,dim))
 	{
 		//v_tmp=t_test_set[i];
 		/*data_result<<get_near_cluster(v_tmp,f_norm)<<"\n";* old*/
 		/*new console*/
 		int i_tmp=get_near_cluster(v_tmp,f_norm);
-		vector<int> v_near_clusters=get_near_cluster_vec(v_tmp,f_norm);
+		vector<int> v_near_clusters=get_near_cluster_vec(v_tmp,f_norm,t_size_train_data);
 		/*изменение 13.11.2012*/
 		for (int j=0;j!=v_near_clusters.size();j++)
 		{
@@ -344,13 +357,11 @@ void Tree::test(const char *t_name_file_clusters,const char *t_name_file_result)
 	/*������ ��������� �������*/
 	TreeNode *T_tmp;
 	ofstream data_clusters(t_name_file_clusters);
-	//vector<TreeNode *>::iterator it=last_layer.begin();
+	vector<TreeNode *>::iterator it=last_layer.begin();
 	cout<<"data cluster"<<"\n";//add
-	//while (it!=last_layer.end())
-	for (auto &it :last_layer)
+	while (it!=last_layer.end())
 	{
-		//T_tmp=(*it);
-		T_tmp=it;
+		T_tmp=(*it);
 		for (unsigned int i=0;i!=T_tmp->_data.pos_clus.size();i++)
 		{
 			/*data_clusters<<T_tmp->_data.pos_clus[i]<<"\t";//add  old*/
@@ -369,6 +380,7 @@ void Tree::test(const char *t_name_file_clusters,const char *t_name_file_result)
 	//new possibility,get distance between clusters and between clusters and data_set
 	get_average_dist_in_clusters(average_cluster_rad,numbers_data_to_one_cluster);
 	get_dist_between_clusters(f_norm);
+	get_sigma_cluster_indicator_test(f_norm);
 	//new possibility,get distance between clusters and between clusters and data_set
 }
 
@@ -474,7 +486,7 @@ void Tree::learn_acc(double (Norm::*f_norm) (const valarray<double>&))
 	}
 }
 
-double Tree::get_sigma_cluster_indicator(double (Norm::*f_norm) (const valarray<double>&))
+double Tree::get_sigma_cluster_indicator_learn(double (Norm::*f_norm) (const valarray<double>&))
 {
 	TreeNode * T_tmp;
 	valarray<double> v_tmp(0.0,dim);
@@ -499,6 +511,42 @@ double Tree::get_sigma_cluster_indicator(double (Norm::*f_norm) (const valarray<
 	return sqrt(summa_acc);
 }
 
+void Tree::get_sigma_cluster_indicator_test(double (Norm::*f_norm) (const valarray<double>&))
+{
+	int l_len_tree=1;
+	int l_len_tree_mem=1;
+	double summa_indic=0.0;
+	int t_num_nodes=0;
+	int t_num_nodes_reserve=0;
+	double summa_reserve=0.0;
+	for (int i=0;i!=indic_layer.size();i++)
+	{
+		l_len_tree=indic_layer[i]->el_height;
+		if (l_len_tree!=l_len_tree_mem)
+		{
+			f_indic<<l_len_tree-1<<"\t";
+			l_len_tree_mem=l_len_tree;
+			f_indic<<t_num_nodes<<"\t";
+			t_num_nodes=t_num_nodes_reserve;
+			f_indic<<sqrt(summa_indic)<<"\n";
+			summa_indic=summa_reserve;
+		}
+		t_num_nodes++;
+		summa_indic+=indic_layer[i]->summa_indic;
+		if ((indic_layer[i]->_left==nullptr)&&(indic_layer[i]->_right==nullptr))
+		{
+			summa_reserve+=indic_layer[i]->summa_indic;
+			t_num_nodes_reserve++;
+		}
+	}
+	f_indic<<l_len_tree<<"\t";
+	l_len_tree_mem=l_len_tree;
+	f_indic<<t_num_nodes<<"\t";
+	t_num_nodes=t_num_nodes_reserve;
+	f_indic<<sqrt(summa_indic)<<"\n";
+	summa_indic=summa_reserve;
+}
+
 void Tree::learn_max_number(double (Norm::*f_norm) (const valarray<double>&))
 {
 	/*����������� ������ ���� ������ ������: ���� �� ������ ������, ������ �� ������ ������*/
@@ -516,7 +564,7 @@ void Tree::learn_max_number(double (Norm::*f_norm) (const valarray<double>&))
 		del_dead_m_thread(num_nodes,num_threads,f_norm);
 		//add-on for graph
 		f_indic<<l_len_tree<<"\t"<<last_layer.size()<<"\t";//add-on for graph
-		f_indic<<get_sigma_cluster_indicator(f_norm)<<"\n";//add-on for graph
+		f_indic<<get_sigma_cluster_indicator_learn(f_norm)<<"\n";//add-on for graph
 		l_len_tree++;
 	}
 }
@@ -955,6 +1003,7 @@ void Tree::load_tree_from_file_helper(TreeNode *node,string &s,ifstream &t_data_
 					//copy_data_set(data.train_set,node->_left->_data); //изменить keep_data_set
 					t_data_tree>>s;
 					load_tree_from_file_helper(node->_left,s,t_data_tree,sh,sh_vec,t_el_height);
+					indic_layer.push_back(node->_left);
 					t_el_height--;
 					load_tree_from_file_helper(node,s,t_data_tree,sh,sh_vec,t_el_height);
 				}
@@ -979,6 +1028,7 @@ void Tree::load_tree_from_file_helper(TreeNode *node,string &s,ifstream &t_data_
 			//copy_data_set(data.train_set,node->_right->_data); // old version need to remove
 			t_data_tree>>s;
 			load_tree_from_file_helper(node->_right,s,t_data_tree,sh,sh_vec,t_el_height);
+			indic_layer.push_back(node->_right);
 			t_el_height--;
 		}
 	}
@@ -1049,7 +1099,7 @@ int Tree::get_near_cluster(valarray<double> &v,double (Norm::*f_norm) (const val
 	return zn;
 }
 
-vector<int> Tree::get_near_cluster_vec(std::valarray<double> &v, double (Norm::* f_norm)(const std::valarray<double> &))
+vector<int> Tree::get_near_cluster_vec(std::valarray<double> &v, double (Norm::* f_norm)(const std::valarray<double> &),double t_size_data)
 {
 	vector<int> v_near_clusters;
 	Norm *o_norm=0;
@@ -1071,10 +1121,12 @@ vector<int> Tree::get_near_cluster_vec(std::valarray<double> &v, double (Norm::*
 		if (norma_l<=norma_r)
 		{
 			node=node->_left;
+			node->summa_indic+=(norma_l*norma_l)/t_size_data;
 		}
 		else
 		{
 			node=node->_right;
+			node->summa_indic+=(norma_r*norma_r)/t_size_data;
 		}
 		v_near_clusters.push_back(node->_data.number_node_vec);
 	}
