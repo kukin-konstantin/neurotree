@@ -28,7 +28,7 @@ name_file_error(t_name_file_error)
 	ifstream data_setting;
 	data_error.open(name_file_error);
 	data_setting.open(t_name_file_settings);
-	if (data_setting!=NULL)
+	if (data_setting.good())
 	{
 		data_setting>>s;
 		read_method(data_setting);
@@ -90,7 +90,7 @@ bool Data_reader::exist_file(const char *t_name_file)
 	bool ok;
 	ifstream file;
 	file.open(t_name_file);
-	if (file!=NULL)
+	if (file.good())
 	{
 		ok=true;
 	}

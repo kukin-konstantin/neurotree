@@ -28,6 +28,13 @@ Char_to_int::Char_to_int(std::string &s_tmp)
 
 bool Char_to_int::operator >>(int &i_tmp)
 {
-	istringstream is(s);
-	return (is >> i_tmp);
+	try
+	{
+		i_tmp = std::stoi(s);
+		return true;
+	}
+	catch (...)
+	{
+		return false;
+	}
 }

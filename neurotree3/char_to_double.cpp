@@ -28,6 +28,13 @@ Char_to_double::Char_to_double(std::string &s_tmp)
 
 bool Char_to_double::operator >>(double &i_tmp)
 {
-	istringstream is(s);
-	return (is >> i_tmp);
+    try
+	{
+		i_tmp = std::stod(s);
+		return true;
+	}
+	catch (...)
+	{
+		return false;
+	} 
 }

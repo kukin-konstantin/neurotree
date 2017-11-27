@@ -410,7 +410,7 @@ deque<valarray<double > > Tree::read_data_to_memory()
     deque<valarray<double > > t_train_set;
 	ifstream stream_data;
 	stream_data.open(name_file_data);
-	while (stream_data!=NULL)
+	while (stream_data.good())
 	{
 		stream_data>>i_tmp;
 		v_tmp[i]=i_tmp;
